@@ -2,7 +2,6 @@ import os
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow import Schema, fields
-from db import DB_URL
 
 def get_env_variable(name):
     try:
@@ -11,13 +10,18 @@ def get_env_variable(name):
         message = "Expected environment variable '{}' not set.".format(name)
         raise Exception(message)
 
+# the values of those depend on your setup
+PGHOST = get_env_variable("PGHOST")
+PGUSER = get_env_variable("PGUSER")
+PGPASSWORD = get_env_variable("PGPASSWORD")
+PGDATABASE = get_env_variable("PGDATABASE")
 
+DB_URL = 'postgresql+psycopg2://{user}:{pw}@{url}/{db}'.format(user=PGUSER,pw=PGPASSWORD,url=PGHOST,db=PGDATABASE)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 db = SQLAlchemy(app)
-
 
    
 class EdgeDevice(db.Model):
@@ -58,6 +62,7 @@ def getDevices():
     id = data.get('id')
     
     iotdev = IotDevice.query.get(id)
+    iotdev.filter('')
     print(iotdev.edgeDevice);
 
     # if id is not None:
