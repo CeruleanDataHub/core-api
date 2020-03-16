@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EdgeDevice } from './edgeDevice.entity';
+import { EdgeQueryObjectType } from './edgeDevice-query.interface';
 
 @Injectable()
 export class EdgeDeviceService {
@@ -20,5 +21,9 @@ export class EdgeDeviceService {
 
     async remove(id: string): Promise<void> {
         await this.edgeDeviceRepository.delete(id);
+    }
+
+    async findWhere(query: EdgeQueryObjectType): Promise<EdgeDevice[]> {
+        return await this.edgeDeviceRepository.find(query);
     }
 }

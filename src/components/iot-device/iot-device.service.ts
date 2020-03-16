@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IoTDevice } from './iot-device.entity';
+import { IoTQueryObjectType } from './iot-device-query.interface';
 
 @Injectable()
-export class IoTDeviceService {
+export class IoTDeviceService { // TODO refuses to return the edgeDeviceId from database, find out why
     constructor(
         @InjectRepository(IoTDevice)
         private readonly IoTDeviceRepository: Repository<IoTDevice>,
@@ -18,7 +19,7 @@ export class IoTDeviceService {
         return this.IoTDeviceRepository.findOne(id);
     }
 
-    findWhere(query: object): Promise<IoTDevice[]> {
+    findWhere(query: IoTQueryObjectType): Promise<IoTDevice[]> {
         return this.IoTDeviceRepository.find(query);
     }
 

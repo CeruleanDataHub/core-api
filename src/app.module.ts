@@ -7,6 +7,8 @@ import { EdgeDevice } from './components/edge-device/edgeDevice.entity';
 import { EdgeDeviceModule } from './components/edge-device/edgeDevice.module';
 import { IoTDevice } from './components/iot-device/iot-device.entity';
 import { IoTDeviceModule } from './components/iot-device/iot-device.module';
+import { Telemetry } from './components/telemetry/telemetry.entity';
+import { TelemetryModule } from './components/telemetry/telemetry.module';
 
 
 @Module({
@@ -18,11 +20,12 @@ import { IoTDeviceModule } from './components/iot-device/iot-device.module';
         username: process.env.PGUSER,
         password: process.env.PGPASSWORD,
         database: process.env.PGDATABASE,
-        entities: [EdgeDevice, IoTDevice],
-        synchronize: true,
+        entities: [EdgeDevice, IoTDevice, Telemetry],
+        synchronize: false,
       }),
       EdgeDeviceModule,
-      IoTDeviceModule
+      IoTDeviceModule,
+      TelemetryModule
   ],
   controllers: [AppController],
   providers: [AppService],
