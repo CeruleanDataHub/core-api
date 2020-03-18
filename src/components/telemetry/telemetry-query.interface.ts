@@ -30,6 +30,7 @@ export interface TelemetryQueryObjectType {
     skip: number | null,
     take: number | null,
     cache: boolean | null,
+    time: string | FindOperator<string> | null,
     temperature: string | FindOperator<string> | null,
     humidity: string | FindOperator<string> | null,
     pressure: string | FindOperator<string> | null,
@@ -38,3 +39,4 @@ export interface TelemetryQueryObjectType {
     voltage: string | FindOperator<string> | null
 }
 
+export const TelemetryProperties = ["time", "temperature", "humidity", "pressure", "txpower", "rssi", "voltage"];

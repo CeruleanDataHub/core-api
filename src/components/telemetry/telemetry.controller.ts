@@ -3,25 +3,18 @@ import { Between, FindOperator } from 'typeorm';
 
 import { TelemetryService } from './telemetry.service';
 import { Telemetry } from './telemetry.entity';
-import { TelemetryQueryObjectType } from './telemetry-query.interface';
+import { TelemetryQueryObjectType, TelemetryProperties } from './telemetry-query.interface';
 
 @Controller('/api/telemetry')
 export class TelemetryController {
-    handleMinMax(
+
+    // if request's where contains arrays(min, max) use typeorm's Between(), otherwise return as is
+    handleBetween(
         whereClause: string | FindOperator<string> | null,
     ): string | FindOperator<string> | null {
         if (Array.isArray(whereClause)) {
-
             const [min, max] = whereClause;
-            const envMin = +process.env.MIN;
-            const envMax = +process.env.MAX;
-            const genericMin = -9999;
-            const genericMax = 9999;
-
-            const queryMin = min ? min : envMin ? envMin : genericMin;
-            const queryMax = max ? max : envMax ? envMax : genericMax;
-
-            return Between(queryMin, queryMax);
+            return Between(min, max);
         }
         return whereClause;
     }
@@ -39,41 +32,18 @@ export class TelemetryController {
     ): Promise<Telemetry[]> {
         // TODO input validation
 
-        if (telemetryQueryObject.where) {
-            if(telemetryQueryObject.where.temperature) {
-                telemetryQueryObject.temperature = this.handleMinMax(
-                    telemetryQueryObject.where.temperature,
-                );
+        if(telemetryQueryObject.where) {
+            for (const val in telemetryQueryObject.where) {
+                telemetryQueryObject.where[val] = this.handleBetween(telemetryQueryObject.where[val]);
             }
-            if(telemetryQueryObject.where.humidity) {
-                telemetryQueryObject.humidity = this.handleMinMax(
-                    telemetryQueryObject.where.humidity,
-                );
+        } else {
+            for (const val in telemetryQueryObject){
+                if(TelemetryProperties.includes(val)){
+                    telemetryQueryObject[val] = this.handleBetween(telemetryQueryObject[val]);
+                }
             }
-            if(telemetryQueryObject.where.pressure) {
-                telemetryQueryObject.pressure = this.handleMinMax(
-                    telemetryQueryObject.where.pressure,
-                );
-            }
-            if(telemetryQueryObject.where.txpower) {
-                telemetryQueryObject.txpower = this.handleMinMax(
-                    telemetryQueryObject.where.txpower,
-                );
-            }
-            if(telemetryQueryObject.where.rssi) {
-                telemetryQueryObject.rssi = this.handleMinMax(
-                    telemetryQueryObject.where.rssi,
-                );
-            }
-            if(telemetryQueryObject.where.voltage) {
-                telemetryQueryObject.voltage = this.handleMinMax(
-                    telemetryQueryObject.where.voltage,
-                );
-            }
-            delete telemetryQueryObject.where;
         }
         console.log(telemetryQueryObject);
-
         return await this.telemetryService.findWhere(telemetryQueryObject);
     }
 }
