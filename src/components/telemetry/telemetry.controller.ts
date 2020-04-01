@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
-import { Between, FindOperator } from 'typeorm';
-
+import { Between, FindOperator, getManager } from 'typeorm';
 import { TelemetryService } from './telemetry.service';
 import { Telemetry } from './telemetry.entity';
 import { TelemetryQueryObjectType, TelemetryProperties } from './telemetry-query.interface';
@@ -46,4 +45,36 @@ export class TelemetryController {
         console.log(telemetryQueryObject);
         return await this.telemetryService.findWhere(telemetryQueryObject);
     }
+
+    /*
+        {
+            name: RUUVITAG,
+            columns: [
+                {name: TEMPERATURE, type: NUMERIC}
+            ]
+        }
+     */
+    @Post('/new-schema')
+    async postNewSchema(
+        @Body() newSchema: any, //TODO object type
+    ): Promise<any> {
+        const entityManager = getManager();
+        const typeName = "type_" + newSchema.name;
+        const typeColumnsArr = newSchema.columns.map(val => val.name + " " + val.type)
+        const typeColumns = typeColumnsArr.join(", ");
+        const typeQuery = `CREATE TYPE ${typeName} AS (${typeColumns});`
+        await entityManager.query(typeQuery);
+
+        const tableName = "telemetry_" + newSchema.name
+        const teleQuery = `CREATE TABLE ${tableName} (
+            telemetry_id text,
+            payload ${typeName}
+        );`
+        /* 
+            CONSTRAINT fk_${tableName}
+                FOREIGN KEY (telemetry_id) REFERENCES telemetry(id)
+        */
+       await entityManager.query(teleQuery);
+    }
+
 }
