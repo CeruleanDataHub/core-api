@@ -1,4 +1,4 @@
-import { Controller, Get, Post, NotFoundException, Body } from '@nestjs/common';
+import { Controller, Get, Post, NotFoundException, BadRequestException, Body, Param } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Registry } from 'azure-iothub';
 
@@ -50,5 +50,24 @@ export class AppController {
                 });
             }
         });
+    }
+
+    @Get('/api/twin/:id')
+    async getTwin(
+        @Param() params
+    ): Promise<any> {
+        var registry = Registry.fromConnectionString(
+            process.env.IOTHUB_SERVICE_CONNECTION,
+        );
+        try {
+            const twin = await registry.getTwin(params.id);
+            return twin.responseBody;
+        } catch (error) {
+            if(error.responseBody.includes("DeviceNotFound")){
+                return new NotFoundException();
+            } else {
+                return new BadRequestException();
+            }
+        }
     }
 }
