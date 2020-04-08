@@ -22,6 +22,7 @@ import { TelemetryModule } from './components/telemetry/telemetry.module';
         database: process.env.PGDATABASE,
         entities: [EdgeDevice, IoTDevice, Telemetry],
         synchronize: false,
+        ssl: { rejectUnauthorized: true },
       }),
       EdgeDeviceModule,
       IoTDeviceModule,
