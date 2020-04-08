@@ -27,24 +27,18 @@ export class TelemetryService {
         await this.TelemetryRepository.delete(id);
     }
 
-    async postNewSchema( 
+    async postNewSchema(
         newSchema: any, //TODO object type
     ): Promise<any> {
         const entityManager = getManager();
-        const typeName = "type_" + newSchema.name;
-        const typeColumnsArr = newSchema.columns.map(val => val.name + " " + val.type)
-        const typeColumns = typeColumnsArr.join(", ");
-        const typeQuery = `CREATE TYPE ${typeName} AS (${typeColumns});`
-        await entityManager.query(typeQuery);
-
-        const tableName = "telemetry_" + newSchema.name
-        const teleQuery = `CREATE TABLE ${tableName} (
-            telemetry_id text,
-            payload ${typeName}
-        );`
-        /* 
-            CONSTRAINT fk_${tableName}
-                FOREIGN KEY (telemetry_id) REFERENCES telemetry(id)
-        */
-       await entityManager.query(teleQuery);
+        let tableName = newSchema.name;
+        const columns = newSchema.columns;
+        await entityManager.transaction(async manager => {
+            await manager.query("SELECT denim_telemetry.denim_telemetry_create_table($1)", [tableName]);
+            columns.forEach(async col => {
+                const colQuery = col.name + " " + col.type;
+                await manager.query("SELECT denim_telemetry.denim_telemetry_alter_table($1, $2)", [tableName, colQuery]);
+            });
+        });
+    }
 }
