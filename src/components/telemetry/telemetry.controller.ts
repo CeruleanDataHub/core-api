@@ -1,6 +1,5 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { Between, FindOperator } from 'typeorm';
-
+import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common';
+import { Between, FindOperator, getManager } from 'typeorm';
 import { TelemetryService } from './telemetry.service';
 import { Telemetry } from './telemetry.entity';
 import { TelemetryQueryObjectType, TelemetryProperties } from './telemetry-query.interface';
@@ -46,4 +45,20 @@ export class TelemetryController {
         console.log(telemetryQueryObject);
         return await this.telemetryService.findWhere(telemetryQueryObject);
     }
+
+    /*
+        {
+            name: RUUVITAG,
+            columns: [
+                {name: TEMPERATURE, type: NUMERIC}
+            ]
+        }
+     */
+    @Post('/new-schema')
+    async postNewSchema(
+        @Body() newSchema: any, //TODO object type
+    ): Promise<any> {
+        await this.telemetryService.postNewSchema(newSchema);
+    }
+
 }
