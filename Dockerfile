@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 COPY . ./
 
 RUN npm install
+RUN npm run build
 
 # Create non root user
 RUN addgroup -S oipusergroup && adduser -S oipuser -G oipusergroup
