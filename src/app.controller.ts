@@ -63,7 +63,7 @@ export class AppController {
             const twin = await registry.getTwin(params.id);
             return twin.responseBody;
         } catch (error) {
-            if(error.responseBody.includes("DeviceNotFound")){
+            if (error.responseBody.includes("DeviceNotFound")){
                 return new NotFoundException();
             } else {
                 return new BadRequestException();

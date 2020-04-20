@@ -1,11 +1,18 @@
-import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common';
-import { Between, FindOperator, getManager } from 'typeorm';
+import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Between, FindOperator } from 'typeorm';
 import { TelemetryService } from './telemetry.service';
 import { Telemetry } from './telemetry.entity';
 import { TelemetryQueryObjectType, TelemetryProperties } from './telemetry-query.interface';
+import { IoTDevice } from '../iot-device/iot-device.entity';
+import { TelemetryStatusGateway } from './telemetry-status.gateway';
 
 @Controller('/api/telemetry')
 export class TelemetryController {
+    
+    constructor(
+        private readonly telemetryService: TelemetryService, 
+        private readonly telemetryStatusGateway:  TelemetryStatusGateway
+    ) {}
 
     // if request's where contains arrays(min, max) use typeorm's Between(), otherwise return as is
     handleBetween(
@@ -17,8 +24,6 @@ export class TelemetryController {
         }
         return whereClause;
     }
-
-    constructor(private readonly telemetryService: TelemetryService) {}
 
     @Get('/all')
     async getBaseAPI(): Promise<Telemetry[]> {
@@ -61,4 +66,32 @@ export class TelemetryController {
         await this.telemetryService.postNewSchema(newSchema);
     }
 
+    @Post('/')
+    async insertTelemetry(
+        @Body() body: any
+    ): Promise<any> {
+        const decodedJson = Buffer.from(body.data.body, 'base64').toString('utf8');
+        const data = JSON.parse(decodedJson);
+        const { time, address, temperature, humidity, pressure, txpower, rssi, voltage } = data;
+
+        this.telemetryStatusGateway.sendDeviceData(address, { 
+            telemetry: data,
+            level: body.data.properties.level,
+        });
+
+        const iotDevice = new IoTDevice();
+        iotDevice.id = address;
+
+        const telemetry = new Telemetry();
+        telemetry.time = time;
+        telemetry.temperature = temperature;
+        telemetry.humidity = humidity;
+        telemetry.pressure = pressure;
+        telemetry.txpower = txpower;
+        telemetry.rssi = rssi;
+        telemetry.voltage = voltage;
+        telemetry.iotDevice = iotDevice;
+
+        await this.telemetryService.save(telemetry);
+    }
 }
