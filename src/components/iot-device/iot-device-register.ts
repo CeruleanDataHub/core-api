@@ -13,8 +13,7 @@ const mockRegister = process.env.MOCKREGISTER;
 const EDGE_DEVICE_MODULE = "RuuviTagGateway";
 const DEVICE_REGISTRATION_ATTEMPTED_METHOD = "DeviceRegistrationAttempted";
 
-const iotHubTransport = require("azure-iot-device-mqtt").Mqtt;
-const iotHubClient = IotHubClient.fromConnectionString(serviceConnectionString, iotHubTransport);
+const iotHubClient = IotHubClient.fromConnectionString(serviceConnectionString);
 
 const computeDerivedSymmetricKey = (primaryKey: string, registrationId: string): string => {
     return createHmac("SHA256", Buffer.from(primaryKey, "base64"))
