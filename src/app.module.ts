@@ -1,4 +1,5 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { UserManagementModule } from './components/user-management/user-management.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
@@ -29,7 +30,8 @@ import { WebhookValidationMiddleware } from "./middleware/webhook-validation-mid
       }),
       EdgeDeviceModule,
       IoTDeviceModule,
-      TelemetryModule
+      TelemetryModule,
+      UserManagementModule,
   ],
   controllers: [AppController],
   providers: [AppService],

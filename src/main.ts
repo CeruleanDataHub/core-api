@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
+import axios from 'axios';
 
 declare const module: any;
-
 async function bootstrap() {
     if (module.hot) {
         module.hot.accept();

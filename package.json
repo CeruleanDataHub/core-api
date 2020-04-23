@@ -25,6 +25,7 @@
     "@nestjs/platform-express": "^7.0.0",
     "@nestjs/platform-socket.io": "^7.0.0",
     "@nestjs/typeorm": "^7.0.0",
+    "auth0": "^2.24.0",
     "@nestjs/websockets": "^7.0.8",
     "azure-iot-provisioning-device": "^1.8.0",
     "azure-iot-provisioning-device-mqtt": "^1.7.0",
