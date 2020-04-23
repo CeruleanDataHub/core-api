@@ -39,6 +39,15 @@ export class UserManagementService {
         }).then(resp => resp.data);
     }
 
+    async getUserRoles(id: string) {
+        const token = await this.getToken();
+        return axios({
+            method: 'GET',
+            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${id}/roles`,
+            headers: { authorization: 'Bearer ' + token },
+        }).then(resp => resp.data);
+    }
+
     async createUsers(credentialObjectType: any) {
         const { email, password, roles } = credentialObjectType;
         const token = await this.getToken();

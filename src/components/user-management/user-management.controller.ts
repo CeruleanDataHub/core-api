@@ -5,6 +5,7 @@ import {
     Post,
     Body,
     BadRequestException,
+    Param
 } from '@nestjs/common';
 
 @Controller('/api/user-management')
@@ -31,5 +32,10 @@ export class UserManagementController {
     @Get('/roles')
     async getRoles() {
         return this.userManagementService.getRoles();
+    }
+
+    @Get('/user/:id/roles')
+    async getUserRoles(@Param('id') id) {
+        return this.userManagementService.getUserRoles(id);
     }
 }
