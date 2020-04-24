@@ -23,6 +23,10 @@ export class TelemetryService {
         return this.TelemetryRepository.find(query);
     }
 
+    async save(telemetry: Telemetry): Promise<void> {
+        await this.TelemetryRepository.save(telemetry);
+    }
+
     async remove(id: string): Promise<void> {
         await this.TelemetryRepository.delete(id);
     }
