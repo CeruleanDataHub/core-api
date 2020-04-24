@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
-import axios from 'axios';
 
 declare const module: any;
 async function bootstrap() {
@@ -11,9 +10,11 @@ async function bootstrap() {
     }
     const app = await NestFactory.create(AppModule);
     // Handle requests with content-types "application/json" and "application/cloudevents+json"
-    app.use(bodyParser.json({
-        type: 'application/*'
-    }));
+    app.use(
+        bodyParser.json({
+            type: 'application/*',
+        }),
+    );
     await app.listen(3000);
 }
 

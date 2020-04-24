@@ -74,37 +74,56 @@ export class UserManagementService {
                     },
                 };
             }
-            const roleIds = await this.fetchId(roles);
-            console.log(typeof roleIds);
-            const roleCreationResponse = await axios({
-                method: 'POST',
-                url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${userData.user_id}/roles`,
-                headers: {
-                    authorization: 'Bearer ' + token,
-                },
-                data: {
-                    roles: roleIds,
-                },
-            });
-            console.log(roleCreationResponse);
+            const roleIds = this.setRoleForAUser(
+                userData.user_id,
+                roles,
+                token,
+            );
+
             return `user created with the roles ${roleIds}`;
         } catch (err) {
             throw new BadRequestException(err.response.data);
         }
-        /*.catch(err => {
-                throw new BadRequestException(err.response.data);
-            });
-
-        return await user;*/
-        /*
-        if(user.user_id){
-            // do roles
-        } else {
-            throw new BadRequestException();
-        }*/
     }
 
-    async fetchId(roles) {
+    async addRolesToAUser(userId: any, roles: any) {
+        const token = await this.getToken();
+        const roleIds = await this.setRoleForAUser(userId, roles, token);
+        return `Roleid ${roleIds} assigned to the user`;
+    }
+
+    async removeRolesFromAUser(userId: any, roles: any) {
+        const token = await this.getToken();
+        const roleIds = await this.fetchRoleIds(roles);
+        const removedIds = await axios({
+            method: 'DELETE',
+            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${userId}/roles`,
+            headers: {
+                authorization: 'Bearer ' + token,
+            },
+            data: {
+                roles: roleIds,
+            },
+        });
+        return `Roleid ${roleIds} removed from the user`;
+    }
+
+    async setRoleForAUser(userId: any, roles: any, token: any) {
+        const roleIds = await this.fetchRoleIds(roles);
+        await axios({
+            method: 'POST',
+            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${userId}/roles`,
+            headers: {
+                authorization: 'Bearer ' + token,
+            },
+            data: {
+                roles: roleIds,
+            },
+        });
+        return roleIds;
+    }
+
+    async fetchRoleIds(roles) {
         const allRoles: any = await this.getRoles();
         console.log(roles);
         let roleIds = allRoles.filter(role => {
