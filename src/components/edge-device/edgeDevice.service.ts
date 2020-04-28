@@ -26,4 +26,8 @@ export class EdgeDeviceService {
     async findWhere(query: EdgeQueryObjectType): Promise<EdgeDevice[]> {
         return await this.edgeDeviceRepository.find(query);
     }
+
+    async insert(edgeDevice: EdgeDevice): Promise<EdgeDevice> {
+        return await this.edgeDeviceRepository.save(edgeDevice);
+    }
 }
