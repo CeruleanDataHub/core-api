@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, HttpCode, HttpStatus, Delete, Param } from '@nestjs/common';
 import { IoTDeviceService } from './iot-device.service';
 import { IoTDevice } from './iot-device.entity';
 import { IoTQueryObjectType } from './iot-device-query.interface';
@@ -8,13 +8,23 @@ export class IoTDeviceController {
     constructor(private readonly ioTDeviceService: IoTDeviceService) {}
 
     @Get('/all')
-    async getBaseAPI(): Promise<IoTDevice[]> {
+    async getAll(): Promise<IoTDevice[]> {
         return await this.ioTDeviceService.findAll();
     }
 
     @Post('/find-where')
     async postFindWhere(@Body() iotQueryObject: IoTQueryObjectType ): Promise<IoTDevice[]> { // TODO input validation
         return await this.ioTDeviceService.findWhere(iotQueryObject);
+    }
+
+    @Post('/')
+    async insert(@Body() iotDevice: IoTDevice): Promise<IoTDevice> {
+        return await this.ioTDeviceService.insert(iotDevice);
+    }
+
+    @Delete('/:id')
+    async remove(@Param('id') id: string): Promise<any> {
+        return await this.ioTDeviceService.remove(id);
     }
 
     @Post('/register')

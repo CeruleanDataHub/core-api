@@ -29,6 +29,10 @@ export class IoTDeviceService {
         await this.IoTDeviceRepository.delete(id);
     }
 
+    async insert(iotDevice: IoTDevice): Promise<IoTDevice> {
+        return await this.IoTDeviceRepository.save(iotDevice);
+    }
+
     async register(address: string, edgeDeviceId: string): Promise<void> {
         const entityManager = getManager();
         await entityManager.transaction(async manager => {
