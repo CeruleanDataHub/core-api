@@ -10,9 +10,9 @@ export class UserManagementService {
             url: 'https://denim-data-hub.eu.auth0.com/oauth/token',
             data: {
                 grant_type: 'client_credentials',
-                client_id: process.env.CLIENT_ID,
-                client_secret: process.env.CLIENT_SECRET,
-                audience: `${process.env.BASE_API}/`,
+                client_id: process.env.AUTH0_CLIENT_ID,
+                client_secret: process.env.AUTH0_CLIENT_SECRET,
+                audience: `${process.env.AUTH0_API}/`,
             },
         })
             .then(resp => {
