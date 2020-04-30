@@ -10,10 +10,9 @@ export class UserManagementService {
             url: 'https://denim-data-hub.eu.auth0.com/oauth/token',
             data: {
                 grant_type: 'client_credentials',
-                client_id: 'FiLFy3rYoOjUer9Ekk9Qakm7jRJZ6lJh',
-                client_secret:
-                    'tUqwOKKb96iALLguJl7OrSmAcsEGJifMPGwaY4B-nonYQRuCX2_eDBvtZN_fZylQ',
-                audience: 'https://denim-data-hub.eu.auth0.com/api/v2/',
+                client_id: process.env.CLIENT_ID,
+                client_secret: process.env.CLIENT_SECRET,
+                audience: `${process.env.BASE_API}/`,
             },
         })
             .then(resp => {
@@ -26,7 +25,7 @@ export class UserManagementService {
         const token = await this.getToken();
         return axios({
             method: 'GET',
-            url: 'https://denim-data-hub.eu.auth0.com/api/v2/users',
+            url: `${process.env.BASE_API}/users`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
     }
@@ -35,7 +34,7 @@ export class UserManagementService {
         const token = await this.getToken();
         return axios({
             method: 'GET',
-            url: 'https://denim-data-hub.eu.auth0.com/api/v2/roles',
+            url: `${process.env.BASE_API}/roles`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
     }
@@ -44,7 +43,7 @@ export class UserManagementService {
         const token = await this.getToken();
         const userPromise = axios({
             method: 'GET',
-            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${id}?fields=user_id%2Cemail%2Cname&include_fields=true`,
+            url: `${process.env.BASE_API}/users/${id}?fields=user_id%2Cemail%2Cname&include_fields=true`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
 
@@ -59,18 +58,18 @@ export class UserManagementService {
         const token = await this.getToken();
         return axios({
             method: 'GET',
-            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${id}/roles`,
+            url: `${process.env.BASE_API}/users/${id}/roles`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
     }
 
-    async createUsers(createUser: CreateUserDto) {
+    async createUser(createUser: CreateUserDto) {
         const { email, password, roles } = createUser;
         const token = await this.getToken();
         try {
             const userCreationResponse = await axios({
                 method: 'POST',
-                url: 'https://denim-data-hub.eu.auth0.com/api/v2/users',
+                url: `${process.env.BASE_API}/users`,
                 headers: {
                     authorization: 'Bearer ' + token,
                 },
@@ -83,7 +82,7 @@ export class UserManagementService {
 
             const userData = userCreationResponse.data;
             if (!Array.isArray(roles)) {
-                return;
+                return 'user created without a role';
             }
             const roleIds = await this.setRoleForAUser(
                 userData.user_id,
@@ -106,7 +105,7 @@ export class UserManagementService {
         const token = await this.getToken();
         await axios({
             method: 'DELETE',
-            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${userId}/roles`,
+            url: `${process.env.BASE_API}/users/${userId}/roles`,
             headers: {
                 authorization: 'Bearer ' + token,
             },
@@ -120,7 +119,7 @@ export class UserManagementService {
     async setRoleForAUser(userId: string, roles: string[], token: string) {
         await axios({
             method: 'POST',
-            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${userId}/roles`,
+            url: `${process.env.BASE_API}/users/${userId}/roles`,
             headers: {
                 authorization: 'Bearer ' + token,
             },
@@ -134,7 +133,7 @@ export class UserManagementService {
         const token = await this.getToken();
         const resp = await axios({
             method: 'GET',
-            url: `https://denim-data-hub.eu.auth0.com/api/v2/roles/${role_id}/users`,
+            url: `${process.env.BASE_API}/roles/${role_id}/users`,
             headers: {
                 authorization: 'Bearer ' + token,
             },

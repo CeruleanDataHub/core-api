@@ -30,7 +30,10 @@ import { WebhookValidationMiddleware } from './middleware/webhook-validation-mid
             database: process.env.PGDATABASE,
             entities: [EdgeDevice, IoTDevice, Telemetry],
             synchronize: false,
-            ssl: { rejectUnauthorized: true },
+            ssl:
+                process.env.NODE_ENV !== 'dev'
+                    ? { rejectUnauthorized: true }
+                    : null,
             namingStrategy: new SnakeNamingStrategy(),
         }),
         EdgeDeviceModule,

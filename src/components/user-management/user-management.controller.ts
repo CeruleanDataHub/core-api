@@ -22,17 +22,14 @@ export class UserManagementController {
         private readonly userManagementService: UserManagementService,
     ) {}
 
-    @Post('/create-user')
-    async createUser(@Body() createUser: CreateUserDto) {}
-
     @Get('/users')
     async getUsers() {
         return this.userManagementService.getUsers();
     }
 
     @Post('/users')
-    async createUsers(@Body() createUser: CreateUserDto) {
-        return this.userManagementService.createUsers(createUser);
+    async createUser(@Body() createUser: CreateUserDto) {
+        return this.userManagementService.createUser(createUser);
     }
 
     @Get('/roles')
