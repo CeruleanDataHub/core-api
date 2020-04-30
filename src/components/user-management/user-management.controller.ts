@@ -11,6 +11,11 @@ import {
     BadRequestException,
 } from '@nestjs/common';
 
+export class CreateUserDto {
+    email: string;
+    password: string;
+    roles: string[];
+}
 @Controller('/api/user-management')
 export class UserManagementController {
     constructor(
@@ -18,7 +23,7 @@ export class UserManagementController {
     ) {}
 
     @Post('/create-user')
-    async createUser(@Body() createUserObjectType: any) {}
+    async createUser(@Body() createUser: CreateUserDto) {}
 
     @Get('/users')
     async getUsers() {
@@ -26,10 +31,8 @@ export class UserManagementController {
     }
 
     @Post('/users')
-    async createUsers(@Body() credentialAndRoleObjectType: any) {
-        return this.userManagementService.createUsers(
-            credentialAndRoleObjectType,
-        );
+    async createUsers(@Body() createUser: CreateUserDto) {
+        return this.userManagementService.createUsers(createUser);
     }
 
     @Get('/roles')
@@ -42,10 +45,15 @@ export class UserManagementController {
         return this.userManagementService.getUserRoles(id);
     }
 
+    @Get('/user/:id')
+    async getUser(@Param('id') id) {
+        return this.userManagementService.getUser(id);
+    }
+
     @Put('/user/:user_id/roles')
     async addRolesToAUser(
         @Param('user_id') user_id: string,
-        @Body() roles: any,
+        @Body() roles: string[],
     ) {
         if (!Array.isArray(roles) || roles.length === 0) {
             throw new BadRequestException('Roles must be an array');
@@ -56,11 +64,16 @@ export class UserManagementController {
     @Delete('/user/:user_id/roles')
     async removeRolesFromAUser(
         @Param('user_id') user_id: string,
-        @Body() roles: any,
+        @Body() roles: string[],
     ) {
         if (!Array.isArray(roles) || roles.length === 0) {
             throw new BadRequestException('Roles must be an array');
         }
         return this.userManagementService.removeRolesFromAUser(user_id, roles);
+    }
+
+    @Get('/roles/:role_id/users')
+    async getUsersOfARole(@Param('role_id') role_id: string) {
+        return this.userManagementService.getUsersOfARole(role_id);
     }
 }

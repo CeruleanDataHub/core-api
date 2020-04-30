@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
+import { CreateUserDto } from './user-management.controller';
 
 @Injectable()
 export class UserManagementService {
@@ -18,7 +19,7 @@ export class UserManagementService {
             .then(resp => {
                 return resp.data.access_token;
             })
-            .catch(err => console.log());
+            .catch(err => console.log(err));
     }
 
     async getUsers() {
@@ -39,6 +40,21 @@ export class UserManagementService {
         }).then(resp => resp.data);
     }
 
+    async getUser(id: string) {
+        const token = await this.getToken();
+        const userPromise = axios({
+            method: 'GET',
+            url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${id}?fields=user_id%2Cemail%2Cname&include_fields=true`,
+            headers: { authorization: 'Bearer ' + token },
+        }).then(resp => resp.data);
+
+        const rolePromise = this.getUserRoles(id);
+
+        return Promise.all([userPromise, rolePromise]).then(([user, roles]) => {
+            user.roles = roles;
+            return user;
+        });
+    }
     async getUserRoles(id: string) {
         const token = await this.getToken();
         return axios({
@@ -48,8 +64,8 @@ export class UserManagementService {
         }).then(resp => resp.data);
     }
 
-    async createUsers(credentialObjectType: any) {
-        const { email, password, roles } = credentialObjectType;
+    async createUsers(createUser: CreateUserDto) {
+        const { email, password, roles } = createUser;
         const token = await this.getToken();
         try {
             const userCreationResponse = await axios({
@@ -67,19 +83,13 @@ export class UserManagementService {
 
             const userData = userCreationResponse.data;
             if (!Array.isArray(roles)) {
-                throw {
-                    response: {
-                        data:
-                            'User created but no roles assigned, because roles must be in an array',
-                    },
-                };
+                return;
             }
-            const roleIds = this.setRoleForAUser(
+            const roleIds = await this.setRoleForAUser(
                 userData.user_id,
                 roles,
                 token,
             );
-
             return `user created with the roles ${roleIds}`;
         } catch (err) {
             throw new BadRequestException(err.response.data);
@@ -92,24 +102,22 @@ export class UserManagementService {
         return `Roleid ${roleIds} assigned to the user`;
     }
 
-    async removeRolesFromAUser(userId: any, roles: any) {
+    async removeRolesFromAUser(userId: string, roles: string[]) {
         const token = await this.getToken();
-        const roleIds = await this.fetchRoleIds(roles);
-        const removedIds = await axios({
+        await axios({
             method: 'DELETE',
             url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${userId}/roles`,
             headers: {
                 authorization: 'Bearer ' + token,
             },
             data: {
-                roles: roleIds,
+                roles: roles,
             },
         });
-        return `Roleid ${roleIds} removed from the user`;
+        return `Roleid ${roles} removed from the user`;
     }
 
-    async setRoleForAUser(userId: any, roles: any, token: any) {
-        const roleIds = await this.fetchRoleIds(roles);
+    async setRoleForAUser(userId: string, roles: string[], token: string) {
         await axios({
             method: 'POST',
             url: `https://denim-data-hub.eu.auth0.com/api/v2/users/${userId}/roles`,
@@ -117,22 +125,20 @@ export class UserManagementService {
                 authorization: 'Bearer ' + token,
             },
             data: {
-                roles: roleIds,
+                roles: roles,
             },
         });
-        return roleIds;
+        return roles;
     }
-
-    async fetchRoleIds(roles) {
-        const allRoles: any = await this.getRoles();
-        console.log(roles);
-        let roleIds = allRoles.filter(role => {
-            console.log(role);
-            return roles.includes(role.name);
+    async getUsersOfARole(role_id: string) {
+        const token = await this.getToken();
+        const resp = await axios({
+            method: 'GET',
+            url: `https://denim-data-hub.eu.auth0.com/api/v2/roles/${role_id}/users`,
+            headers: {
+                authorization: 'Bearer ' + token,
+            },
         });
-        roleIds = roleIds.map(role => role.id);
-
-        console.log(roleIds);
-        return roleIds;
+        return resp.data;
     }
 }
