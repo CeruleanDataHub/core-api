@@ -25,7 +25,7 @@ export class UserManagementService {
         const token = await this.getToken();
         return axios({
             method: 'GET',
-            url: `${process.env.BASE_API}/users`,
+            url: `${process.env.AUTH0_API}/users`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
     }
@@ -34,7 +34,7 @@ export class UserManagementService {
         const token = await this.getToken();
         return axios({
             method: 'GET',
-            url: `${process.env.BASE_API}/roles`,
+            url: `${process.env.AUTH0_API}/roles`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
     }
@@ -43,7 +43,7 @@ export class UserManagementService {
         const token = await this.getToken();
         const userPromise = axios({
             method: 'GET',
-            url: `${process.env.BASE_API}/users/${id}?fields=user_id%2Cemail%2Cname&include_fields=true`,
+            url: `${process.env.AUTH0_API}/users/${id}?fields=user_id%2Cemail%2Cname&include_fields=true`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
 
@@ -58,7 +58,7 @@ export class UserManagementService {
         const token = await this.getToken();
         return axios({
             method: 'GET',
-            url: `${process.env.BASE_API}/users/${id}/roles`,
+            url: `${process.env.AUTH0_API}/users/${id}/roles`,
             headers: { authorization: 'Bearer ' + token },
         }).then(resp => resp.data);
     }
@@ -69,7 +69,7 @@ export class UserManagementService {
         try {
             const userCreationResponse = await axios({
                 method: 'POST',
-                url: `${process.env.BASE_API}/users`,
+                url: `${process.env.AUTH0_API}/users`,
                 headers: {
                     authorization: 'Bearer ' + token,
                 },
@@ -105,7 +105,7 @@ export class UserManagementService {
         const token = await this.getToken();
         await axios({
             method: 'DELETE',
-            url: `${process.env.BASE_API}/users/${userId}/roles`,
+            url: `${process.env.AUTH0_API}/users/${userId}/roles`,
             headers: {
                 authorization: 'Bearer ' + token,
             },
@@ -119,7 +119,7 @@ export class UserManagementService {
     async setRoleForAUser(userId: string, roles: string[], token: string) {
         await axios({
             method: 'POST',
-            url: `${process.env.BASE_API}/users/${userId}/roles`,
+            url: `${process.env.AUTH0_API}/users/${userId}/roles`,
             headers: {
                 authorization: 'Bearer ' + token,
             },
@@ -133,7 +133,7 @@ export class UserManagementService {
         const token = await this.getToken();
         const resp = await axios({
             method: 'GET',
-            url: `${process.env.BASE_API}/roles/${role_id}/users`,
+            url: `${process.env.AUTH0_API}/roles/${role_id}/users`,
             headers: {
                 authorization: 'Bearer ' + token,
             },
