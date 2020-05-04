@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
+require('dotenv').config();
 
 declare const module: any;
-
 async function bootstrap() {
     if (module.hot) {
         module.hot.accept();
@@ -11,9 +11,11 @@ async function bootstrap() {
     }
     const app = await NestFactory.create(AppModule);
     // Handle requests with content-types "application/json" and "application/cloudevents+json"
-    app.use(bodyParser.json({
-        type: 'application/*'
-    }));
+    app.use(
+        bodyParser.json({
+            type: 'application/*',
+        }),
+    );
     await app.listen(3000);
 }
 
