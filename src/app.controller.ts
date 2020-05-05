@@ -64,9 +64,9 @@ export class AppController {
             return twin.responseBody;
         } catch (error) {
             if (error.responseBody.includes("DeviceNotFound")){
-                return new NotFoundException();
+                throw new NotFoundException();
             } else {
-                return new BadRequestException();
+                throw new BadRequestException();
             }
         }
     }
