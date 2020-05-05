@@ -44,11 +44,11 @@ import { WebhookValidationMiddleware } from './middleware/webhook-validation-mid
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
         consumer.apply(WebhookValidationMiddleware).forRoutes({
-            path: '/api/iot-device/register',
+            path: '/iot-device/register',
             method: RequestMethod.OPTIONS,
         });
         consumer.apply(WebhookValidationMiddleware).forRoutes({
-            path: '/api/telemetry',
+            path: '/telemetry',
             method: RequestMethod.OPTIONS,
         });
         consumer.apply(CorsMiddleware).forRoutes('*');

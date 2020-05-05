@@ -3,7 +3,7 @@ import { EdgeDeviceService } from './edgeDevice.service';
 import { EdgeDevice } from './edgeDevice.entity';
 import { EdgeQueryObjectType } from './edgeDevice-query.interface';
 
-@Controller('/api/edge')
+@Controller('/edge')
 export class EdgeDeviceController {
     constructor(private readonly edgeDeviceService: EdgeDeviceService) {}
 
@@ -13,7 +13,10 @@ export class EdgeDeviceController {
     }
 
     @Post('/find-where')
-    async postFindWhere(@Body() edgeQueryObjectType: EdgeQueryObjectType ): Promise<EdgeDevice[]> { // TODO input validation
+    async postFindWhere(
+        @Body() edgeQueryObjectType: EdgeQueryObjectType,
+    ): Promise<EdgeDevice[]> {
+        // TODO input validation
         return await this.edgeDeviceService.findWhere(edgeQueryObjectType);
     }
 

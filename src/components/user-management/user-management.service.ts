@@ -95,7 +95,7 @@ export class UserManagementService {
         }
     }
 
-    async addRolesToAUser(userId: any, roles: any) {
+    async addRolesToAUser(userId: string, roles: string[]) {
         const token = await this.getToken();
         const roleIds = await this.setRoleForAUser(userId, roles, token);
         return `Roleid ${roleIds} assigned to the user`;
