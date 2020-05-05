@@ -3,6 +3,7 @@ import {
     NestModule,
     MiddlewareConsumer,
     RequestMethod,
+    DynamicModule,
 } from '@nestjs/common';
 import { UserManagementModule } from './components/user-management/user-management.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,29 +20,37 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { CorsMiddleware } from './middleware/cors-middleware';
 import { WebhookValidationMiddleware } from './middleware/webhook-validation-middleware';
 
-@Module({
-    imports: [
-        TypeOrmModule.forRoot({
-            type: 'postgres',
-            host: process.env.PGHOST,
-            port: +process.env.PGPORT,
-            username: process.env.PGUSER,
-            password: process.env.PGPASSWORD,
-            database: process.env.PGDATABASE,
-            entities: [EdgeDevice, IoTDevice, Telemetry],
-            synchronize: false,
-            ssl: { rejectUnauthorized: process.env.PG_SSL ? true : false },
-            namingStrategy: new SnakeNamingStrategy(),
-        }),
-        EdgeDeviceModule,
-        IoTDeviceModule,
-        TelemetryModule,
-        UserManagementModule,
-    ],
-    controllers: [AppController],
-    providers: [AppService],
-})
+export function getOrmConfig() {
+    const ssl = JSON.parse(process.env.PG_SSL);
+    return {
+        type: 'postgres',
+        host: process.env.PGHOST,
+        port: +process.env.PGPORT,
+        username: process.env.PGUSER,
+        password: process.env.PGPASSWORD,
+        database: process.env.PGDATABASE,
+        entities: [EdgeDevice, IoTDevice, Telemetry],
+        ...ssl,
+        synchronize: false,
+        namingStrategy: new SnakeNamingStrategy(),
+    };
+}
+
 export class AppModule implements NestModule {
+    public static forRoot(): DynamicModule {
+        return {
+            module: AppModule,
+            imports: [
+                TypeOrmModule.forRoot(getOrmConfig()),
+                EdgeDeviceModule,
+                IoTDeviceModule,
+                TelemetryModule,
+                UserManagementModule,
+            ],
+            controllers: [AppController],
+            providers: [AppService],
+        };
+    }
     configure(consumer: MiddlewareConsumer) {
         consumer.apply(WebhookValidationMiddleware).forRoutes({
             path: '/iot-device/register',

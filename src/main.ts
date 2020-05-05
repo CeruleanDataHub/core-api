@@ -11,7 +11,7 @@ async function bootstrap() {
         module.hot.accept();
         module.hot.dispose(() => app && app.close());
     }
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule.forRoot());
     // Handle requests with content-types "application/json" and "application/cloudevents+json"
     app.use(
         bodyParser.json({
