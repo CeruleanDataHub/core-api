@@ -21,7 +21,7 @@ import { CorsMiddleware } from './middleware/cors-middleware';
 import { WebhookValidationMiddleware } from './middleware/webhook-validation-middleware';
 
 export function getOrmConfig() {
-    const ssl = JSON.parse(process.env.PG_SSL);
+    const ssl = JSON.parse(process.env.PGSSL);
     return {
         type: 'postgres',
         host: process.env.PGHOST,
