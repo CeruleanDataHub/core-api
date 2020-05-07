@@ -10,7 +10,7 @@ import {
 import { AppService } from './app.service';
 import { Registry } from 'azure-iothub';
 
-@Controller()
+@Controller('/api/v1')
 export class AppController {
     constructor(private readonly appService: AppService) {}
 

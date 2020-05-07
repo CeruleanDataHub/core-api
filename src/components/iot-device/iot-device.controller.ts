@@ -12,7 +12,7 @@ import { IoTDeviceService } from './iot-device.service';
 import { IoTDevice } from './iot-device.entity';
 import { IoTQueryObjectType } from './iot-device-query.interface';
 
-@Controller('/iot-device')
+@Controller('/api/v1/iot-device')
 export class IoTDeviceController {
     constructor(private readonly ioTDeviceService: IoTDeviceService) {}
 

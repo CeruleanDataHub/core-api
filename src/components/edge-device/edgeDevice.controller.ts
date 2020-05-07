@@ -3,7 +3,7 @@ import { EdgeDeviceService } from './edgeDevice.service';
 import { EdgeDevice } from './edgeDevice.entity';
 import { EdgeQueryObjectType } from './edgeDevice-query.interface';
 
-@Controller('/edge')
+@Controller('/api/v1/edge')
 export class EdgeDeviceController {
     constructor(private readonly edgeDeviceService: EdgeDeviceService) {}
 
