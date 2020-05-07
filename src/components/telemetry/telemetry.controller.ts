@@ -120,4 +120,23 @@ export class TelemetryController {
 
         await this.telemetryService.save(telemetry);
     }
+
+    /*
+        {
+            table: TABLENAME,
+            startDate: DATE,
+            endDate: DATE,
+            columns: [
+                COLUMS,
+                ARRAY
+            ]
+        }
+    */
+    @Post('/telemetry-query')
+    async postQuery(
+        @Body() postBody: any
+    ): Promise<any> {
+        return await this.telemetryService.postTelemetryQuery(postBody);
+    }
+
 }

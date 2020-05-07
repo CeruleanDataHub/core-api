@@ -51,4 +51,22 @@ export class TelemetryService {
             });
         });
     }
+
+
+    async postTelemetryQuery(
+        postBody: any, //TODO object type
+    ): Promise<any> {
+        const entityManager = getManager();
+        const tableName = postBody.table;
+        const startDate = new Date(postBody.startDate).getTime() / 1000;
+        const endDate = new Date(postBody.endDate).getTime() / 1000;
+        const columns = postBody.columns;
+        let result = null;
+        await entityManager.transaction(async manager => {
+            await manager.query("SELECT denim_telemetry.telemetry_query('cursor', $1, to_timestamp($2), to_timestamp($3), $4);",
+                [tableName, startDate, endDate, columns]);
+            result = await manager.query("FETCH ALL IN \"cursor\"");
+        });
+        return result;
+    }
 }
