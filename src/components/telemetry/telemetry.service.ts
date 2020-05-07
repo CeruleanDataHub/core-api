@@ -12,7 +12,7 @@ export class TelemetryService {
     ) {}
 
     findAll(): Promise<Telemetry[]> {
-        return this.TelemetryRepository.find({relations: ['iotDevice']});
+        return this.TelemetryRepository.find({ relations: ['iotDevice'] });
     }
 
     findOne(id: string): Promise<Telemetry> {
@@ -38,10 +38,16 @@ export class TelemetryService {
         let tableName = newSchema.name;
         const columns = newSchema.columns;
         await entityManager.transaction(async manager => {
-            await manager.query("SELECT denim_telemetry.denim_telemetry_create_table($1)", [tableName]);
+            await manager.query(
+                'SELECT denim_telemetry.denim_telemetry_create_table($1)',
+                [tableName],
+            );
             columns.forEach(async col => {
-                const colQuery = col.name + " " + col.type;
-                await manager.query("SELECT denim_telemetry.denim_telemetry_alter_table($1, $2)", [tableName, colQuery]);
+                const colQuery = col.name + ' ' + col.type;
+                await manager.query(
+                    'SELECT denim_telemetry.denim_telemetry_alter_table($1, $2)',
+                    [tableName, colQuery],
+                );
             });
         });
     }

@@ -2,16 +2,31 @@ import { Controller, Get, Post, Body } from '@nestjs/common';
 import { Between, FindOperator } from 'typeorm';
 import { TelemetryService } from './telemetry.service';
 import { Telemetry } from './telemetry.entity';
-import { TelemetryQueryObjectType, TelemetryProperties } from './telemetry-query.interface';
+import {
+    TelemetryQueryObjectType,
+    TelemetryProperties,
+} from './telemetry-query.interface';
 import { IoTDevice } from '../iot-device/iot-device.entity';
-import { TelemetryStatusGateway } from './telemetry-status.gateway';
+import { TelemetryStatusGateway } from './telemetry-status.gateway';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 
-@Controller('/api/telemetry')
+class NameTypeObject {
+    @ApiProperty()
+    name: string;
+    @ApiProperty()
+    type: string;
+}
+class NewSchemaDto {
+    @ApiProperty()
+    name: string;
+    @ApiProperty({ type: [NameTypeObject] })
+    columns: NameTypeObject[];
+}
+@Controller('/telemetry')
 export class TelemetryController {
-    
     constructor(
-        private readonly telemetryService: TelemetryService, 
-        private readonly telemetryStatusGateway:  TelemetryStatusGateway
+        private readonly telemetryService: TelemetryService,
+        private readonly telemetryStatusGateway: TelemetryStatusGateway,
     ) {}
 
     // if request's where contains arrays(min, max) use typeorm's Between(), otherwise return as is
@@ -36,14 +51,18 @@ export class TelemetryController {
     ): Promise<Telemetry[]> {
         // TODO input validation
 
-        if(telemetryQueryObject.where) {
+        if (telemetryQueryObject.where) {
             for (const val in telemetryQueryObject.where) {
-                telemetryQueryObject.where[val] = this.handleBetween(telemetryQueryObject.where[val]);
+                telemetryQueryObject.where[val] = this.handleBetween(
+                    telemetryQueryObject.where[val],
+                );
             }
         } else {
-            for (const val in telemetryQueryObject){
-                if(TelemetryProperties.includes(val)){
-                    telemetryQueryObject[val] = this.handleBetween(telemetryQueryObject[val]);
+            for (const val in telemetryQueryObject) {
+                if (TelemetryProperties.includes(val)) {
+                    telemetryQueryObject[val] = this.handleBetween(
+                        telemetryQueryObject[val],
+                    );
                 }
             }
         }
@@ -60,21 +79,28 @@ export class TelemetryController {
         }
      */
     @Post('/new-schema')
-    async postNewSchema(
-        @Body() newSchema: any, //TODO object type
-    ): Promise<any> {
+    async postNewSchema(@Body() newSchema: NewSchemaDto): Promise<any> {
         await this.telemetryService.postNewSchema(newSchema);
     }
 
     @Post('/')
-    async insertTelemetry(
-        @Body() body: any
-    ): Promise<any> {
-        const decodedJson = Buffer.from(body.data.body, 'base64').toString('utf8');
+    async insertTelemetry(@Body() body: any): Promise<any> {
+        const decodedJson = Buffer.from(body.data.body, 'base64').toString(
+            'utf8',
+        );
         const data = JSON.parse(decodedJson);
-        const { time, address, temperature, humidity, pressure, txpower, rssi, voltage } = data;
+        const {
+            time,
+            address,
+            temperature,
+            humidity,
+            pressure,
+            txpower,
+            rssi,
+            voltage,
+        } = data;
 
-        this.telemetryStatusGateway.sendDeviceData(address, { 
+        this.telemetryStatusGateway.sendDeviceData(address, {
             telemetry: data,
             level: body.data.properties.level,
         });

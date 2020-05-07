@@ -1,4 +1,12 @@
-import { Controller, Get, Post, NotFoundException, BadRequestException, Body, Param } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    NotFoundException,
+    BadRequestException,
+    Body,
+    Param,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { Registry } from 'azure-iothub';
 
@@ -8,11 +16,6 @@ export class AppController {
 
     @Get('/')
     getBase(): string {
-        return this.appService.getBaseApi();
-    }
-
-    @Get('/api')
-    getBaseAPI(): string {
         return this.appService.getBaseApi();
     }
 
@@ -28,7 +31,7 @@ export class AppController {
             }
         }
     */
-    @Post('/api/twin/update')
+    @Post('/twin/update')
     async postUpdateTwin(
         @Body() postTwin: any, //TODO object type
     ): Promise<any> {
@@ -37,14 +40,14 @@ export class AppController {
         );
         registry.getTwin(postTwin.id, async (err, twin) => {
             if (err) {
-                console.log("error updating twin:", err);
+                console.log('error updating twin:', err);
                 throw new NotFoundException();
             } else {
                 twin.update(postTwin.state, (err, twin) => {
                     if (err) {
                         console.error(err.message);
                     } else {
-                        console.log("Sent patch:");
+                        console.log('Sent patch:');
                         console.log(JSON.stringify(postTwin.state, null, 2));
                     }
                 });
@@ -52,18 +55,16 @@ export class AppController {
         });
     }
 
-    @Get('/api/twin/:id')
-    async getTwin(
-        @Param() params
-    ): Promise<any> {
+    @Get('/twin/:id')
+    async getTwin(@Param('id') id: string): Promise<any> {
         var registry = Registry.fromConnectionString(
             process.env.IOTHUB_SERVICE_CONNECTION,
         );
         try {
-            const twin = await registry.getTwin(params.id);
+            const twin = await registry.getTwin(id);
             return twin.responseBody;
         } catch (error) {
-            if (error.responseBody.includes("DeviceNotFound")){
+            if (error.responseBody.includes('DeviceNotFound')) {
                 throw new NotFoundException();
             } else {
                 throw new BadRequestException();

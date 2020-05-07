@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { UserManagementService } from './user-management.service';
 
 import {
@@ -12,11 +13,16 @@ import {
 } from '@nestjs/common';
 
 export class CreateUserDto {
+    @ApiProperty()
     email: string;
+
+    @ApiProperty()
     password: string;
+
+    @ApiProperty()
     roles: string[];
 }
-@Controller('/api/user-management')
+@Controller('/user-management')
 export class UserManagementController {
     constructor(
         private readonly userManagementService: UserManagementService,
@@ -38,12 +44,12 @@ export class UserManagementController {
     }
 
     @Get('/user/:id/roles')
-    async getUserRoles(@Param('id') id) {
+    async getUserRoles(@Param('id') id: string) {
         return this.userManagementService.getUserRoles(id);
     }
 
     @Get('/user/:id')
-    async getUser(@Param('id') id) {
+    async getUser(@Param('id') id: string) {
         return this.userManagementService.getUser(id);
     }
 
