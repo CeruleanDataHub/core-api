@@ -1,9 +1,10 @@
+require('dotenv').config();
+
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
-require('dotenv').config();
 
 declare const module: any;
 async function bootstrap() {
