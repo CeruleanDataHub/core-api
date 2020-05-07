@@ -23,7 +23,8 @@ const computeDerivedSymmetricKey = (primaryKey: string, registrationId: string):
 
 const MESSAGE = {
     "DEVICE_REGISTRATION_FAILURE": "Error registering the device",
-    "DEVICE_DOES_NOT_EXISTS": "IoT or Edge Device does not exists in database or IoT device is already assigned.",
+    "EDGE_DEVICE_DOES_NOT_EXISTS": "Edge device does not exists in the database",
+    "DEVICE_ALREADY_ASSIGNED": "IoT device is already assigned to other edge device",
     "GENERIC_SUCCESS": "Registration successful"
 }
 
@@ -34,9 +35,7 @@ class ReturnObject {
     message: string = MESSAGE.DEVICE_REGISTRATION_FAILURE;
 }
 
-const registerDevice = async (registrationId: string, edgeDeviceId: string): Promise<ReturnObject> => {
-    const baseReturnObject = new ReturnObject();
-
+const registerDevice = async (registrationId: string): Promise<void> => {
     const symmetricKey = computeDerivedSymmetricKey(primaryKey, registrationId);
     const provisioningSecurityClient = new SymmetricKeySecurityClient(registrationId, symmetricKey);
     const provisioningClient = ProvisioningDeviceClient.create(
@@ -46,51 +45,29 @@ const registerDevice = async (registrationId: string, edgeDeviceId: string): Pro
         provisioningSecurityClient
     );
 
-    return new Promise( async(resolve, reject) => {
-        if (mockRegister) {
-            baseReturnObject.wasSuccessful = true;
-            console.log("MOCKING REGISTRATION: ", baseReturnObject);
-            invokeDirectMethod(edgeDeviceId, EDGE_DEVICE_MODULE, DEVICE_REGISTRATION_ATTEMPTED_METHOD, baseReturnObject)
-                .then(_ => {
-                    resolve(baseReturnObject);
-                })
-                .catch(err => {
-                    console.log("error mock register: ", err);
-                });
-        } else {
-            const registerResult = await doRegister(
-                provisioningClient,
-                baseReturnObject
-            );
-
-            console.log("Sending register device");
-            invokeDirectMethod(edgeDeviceId, EDGE_DEVICE_MODULE, DEVICE_REGISTRATION_ATTEMPTED_METHOD, registerResult)
-                .then(_ => {
-                    resolve(registerResult);
-                })
-                .catch(err => {
-                    console.log(err);
-                    reject(err);
-                });
-        }
-    });
+    if (mockRegister) {
+        return new Promise((resolve, _) => {
+            console.log("MOCKING REGISTRATION");
+            resolve();
+        })
+    } else {
+        return await doRegister(provisioningClient);
+    }
 };
 
-const doRegister = (provisioningClient, baseReturnObject: ReturnObject): Promise<ReturnObject> => {
+const doRegister = (provisioningClient): Promise<void> => {
     return new Promise((resolve, reject) => {
         provisioningClient.register((err: Error) => {
             if (err) {
-                reject(baseReturnObject);
+                reject(err);
             } else {
-                baseReturnObject.message = MESSAGE.GENERIC_SUCCESS;
-                baseReturnObject.wasSuccessful = true;
-                resolve(baseReturnObject);
+                resolve();
             }
         });
     });
 };
 
-const invokeDirectMethod = (edgeDeviceId, moduleId, method, payload) => {
+const invokeDirectMethod = (edgeDeviceId: string, moduleId: string, method: string, payload: ReturnObject) => {
     console.log('Invoking direct method ' + method + ' on device ' + edgeDeviceId);
 
     const methodParams = {
@@ -111,14 +88,13 @@ const invokeDirectMethod = (edgeDeviceId, moduleId, method, payload) => {
         });
     })
 }
-
-const sendDeviceDoesNotExist = (registrationId: string, edgeDeviceId: string) => {
+const sendMessage = (registrationId, edgeDeviceId, wasSuccessful, message) => {
     const obj = new ReturnObject();
-    obj.message = MESSAGE.DEVICE_DOES_NOT_EXISTS;
     obj.registrationId = registrationId;
     obj.edgeDeviceId = edgeDeviceId
+    obj.message = message;
+    obj.wasSuccessful = wasSuccessful;
 
-    console.log("Sending device does not exist");
     invokeDirectMethod(edgeDeviceId, EDGE_DEVICE_MODULE, DEVICE_REGISTRATION_ATTEMPTED_METHOD, obj)
         .then(result => {
             console.log(result);
@@ -126,23 +102,21 @@ const sendDeviceDoesNotExist = (registrationId: string, edgeDeviceId: string) =>
         .catch(err => {
             console.log(err);
         });
+}
+
+const sendDeviceAlreadyAssigned = (registrationId: string, edgeDeviceId: string) => {
+    console.log("Sending device already assigned");
+    sendMessage(registrationId, edgeDeviceId, false, MESSAGE.DEVICE_ALREADY_ASSIGNED);
+}
+
+const sendEdgeDeviceDoesNotExist = (registrationId: string, edgeDeviceId: string) => {
+    console.log("Sending edge device does not exist");
+    sendMessage(registrationId, edgeDeviceId, false, MESSAGE.EDGE_DEVICE_DOES_NOT_EXISTS);
 }
 
 const sendDeviceRegistrationSuccess = (registrationId: string, edgeDeviceId: string) => {
-    const obj = new ReturnObject();
-    obj.message = MESSAGE.GENERIC_SUCCESS;
-    obj.registrationId = registrationId;
-    obj.edgeDeviceId = edgeDeviceId
-    obj.wasSuccessful = true;
-
     console.log("Sending device registration success");
-    invokeDirectMethod(edgeDeviceId, EDGE_DEVICE_MODULE, DEVICE_REGISTRATION_ATTEMPTED_METHOD, obj)
-        .then(result => {
-            console.log(result);
-        })
-        .catch(err => {
-            console.log(err);
-        });
+    sendMessage(registrationId, edgeDeviceId, true, MESSAGE.GENERIC_SUCCESS);
 }
 
-export { registerDevice, sendDeviceDoesNotExist, sendDeviceRegistrationSuccess }
+export { registerDevice, sendEdgeDeviceDoesNotExist, sendDeviceRegistrationSuccess, sendDeviceAlreadyAssigned }
