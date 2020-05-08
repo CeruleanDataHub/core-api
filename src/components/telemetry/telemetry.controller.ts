@@ -22,7 +22,7 @@ class NewSchemaDto {
     @ApiProperty({ type: [NameTypeObject] })
     columns: NameTypeObject[];
 }
-@Controller('/api/v1/telemetry')
+@Controller('/telemetry')
 export class TelemetryController {
     constructor(
         private readonly telemetryService: TelemetryService,
