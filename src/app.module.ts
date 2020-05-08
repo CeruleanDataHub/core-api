@@ -1,5 +1,4 @@
 import {
-    Module,
     NestModule,
     MiddlewareConsumer,
     RequestMethod,
@@ -19,6 +18,7 @@ import { TelemetryModule } from './components/telemetry/telemetry.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { CorsMiddleware } from './middleware/cors-middleware';
 import { WebhookValidationMiddleware } from './middleware/webhook-validation-middleware';
+import { HealthModule } from './components/health/health.module';
 
 export function getOrmConfig() {
     const ssl = JSON.parse(process.env.PGSSL);
@@ -46,6 +46,7 @@ export class AppModule implements NestModule {
                 IoTDeviceModule,
                 TelemetryModule,
                 UserManagementModule,
+                HealthModule,
             ],
             controllers: [AppController],
             providers: [AppService],
