@@ -1,34 +1,47 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Telemetry } from './telemetry.entity';
-import { Repository, getManager } from 'typeorm';
-import { TelemetryQueryObjectType } from './telemetry-query.interface';
+import { getManager } from 'typeorm';
+import { Device, DeviceType } from '../device/device.entity';
 
 @Injectable()
 export class TelemetryService {
-    constructor(
-        @InjectRepository(Telemetry)
-        private readonly TelemetryRepository: Repository<Telemetry>,
-    ) {}
 
-    findAll(): Promise<Telemetry[]> {
-        return this.TelemetryRepository.find({ relations: ['iotDevice'] });
-    }
+    async save(data): Promise<void> {
 
-    findOne(id: string): Promise<Telemetry> {
-        return this.TelemetryRepository.findOne(id);
-    }
+        const entityManager = getManager();
 
-    findWhere(query: TelemetryQueryObjectType): Promise<Telemetry[]> {
-        return this.TelemetryRepository.find(query);
-    }
+        let devicesByExternalId = await entityManager.find(Device, {
+            where: {
+                external_id: data.address,
+                type: DeviceType.Node
+            }
+        });
 
-    async save(telemetry: Telemetry): Promise<void> {
-        await this.TelemetryRepository.save(telemetry);
-    }
+        if (devicesByExternalId.length === 0) {
+            throw Error(`No devices with external id ${data.address} found`);
+        }
+        
+        if (devicesByExternalId.length > 1) {
+            throw Error(`Multiple devices with external id ${data.address} found`);
+        }
 
-    async remove(id: string): Promise<void> {
-        await this.TelemetryRepository.delete(id);
+        let device = devicesByExternalId[0];
+
+        entityManager.createQueryBuilder()
+            .insert()
+            .into("denim_telemetry.ruuvi_telemetry")
+            .values([
+                {
+                    time: data.time,
+                    temperature: data.temperature,
+                    humidity: data.humidity,
+                    pressure: data.pressure,
+                    tx_power: data.txpower,
+                    voltage: data.voltage,
+                    rssi: data.rssi,
+                    device_id: device.id
+                },
+            ])
+            .execute();
     }
 
     async postNewSchema(
@@ -51,7 +64,6 @@ export class TelemetryService {
             });
         });
     }
-
 
     async postTelemetryQuery(
         postBody: any, //TODO object type

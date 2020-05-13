@@ -9,11 +9,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { EdgeDevice } from './components/edge-device/edgeDevice.entity';
-import { EdgeDeviceModule } from './components/edge-device/edgeDevice.module';
-import { IoTDevice } from './components/iot-device/iot-device.entity';
-import { IoTDeviceModule } from './components/iot-device/iot-device.module';
-import { Telemetry } from './components/telemetry/telemetry.entity';
+import { Device } from './components/device/device.entity';
+import { DeviceModule } from './components/device/device.module';
 import { TelemetryModule } from './components/telemetry/telemetry.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { CorsMiddleware } from './middleware/cors-middleware';
@@ -29,7 +26,7 @@ export function getOrmConfig() {
         username: process.env.PGUSER,
         password: process.env.PGPASSWORD,
         database: process.env.PGDATABASE,
-        entities: [EdgeDevice, IoTDevice, Telemetry],
+        entities: [Device],
         ...ssl,
         synchronize: false,
         namingStrategy: new SnakeNamingStrategy(),
@@ -42,8 +39,7 @@ export class AppModule implements NestModule {
             module: AppModule,
             imports: [
                 TypeOrmModule.forRoot(getOrmConfig()),
-                EdgeDeviceModule,
-                IoTDeviceModule,
+                DeviceModule,
                 TelemetryModule,
                 UserManagementModule,
                 HealthModule,
@@ -53,14 +49,13 @@ export class AppModule implements NestModule {
         };
     }
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(WebhookValidationMiddleware).forRoutes({
-            path: '/iot-device/register',
-            method: RequestMethod.OPTIONS,
-        });
-        consumer.apply(WebhookValidationMiddleware).forRoutes({
-            path: '/telemetry',
-            method: RequestMethod.OPTIONS,
-        });
+        const webhookUrls = ['/device/register', '/telemetry'];
+        for (const webhookUrl of webhookUrls) {
+            consumer.apply(WebhookValidationMiddleware).forRoutes({
+                path: webhookUrl,
+                method: RequestMethod.OPTIONS,
+            });
+        }
         consumer.apply(CorsMiddleware).forRoutes('*');
     }
 }
