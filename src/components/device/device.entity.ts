@@ -36,7 +36,11 @@ export class Device {
     @Column()
     deviceEnrollmentGroupId: string
 
-    @Column()
+    @Column({
+        type: "enum",
+        enum: DeviceType,
+        default: DeviceType.Node
+    })
     type: DeviceType
 
     @Column({ type: "point", nullable: true })
@@ -48,6 +52,10 @@ export class Device {
     @UpdateDateColumn({ type: "timestamp"})
     modified: Date
 
-    @Column()
+    @Column({
+        type: "enum",
+        enum: DeviceStatus,
+        default: DeviceStatus.Created
+    })
     status: DeviceStatus
 }
