@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { getManager } from 'typeorm';
-import { Device } from '../device/device.entity';
+import { Device, DeviceType } from '../device/device.entity';
 
 @Injectable()
 export class TelemetryService {
@@ -12,7 +12,7 @@ export class TelemetryService {
         let devicesByExternalId = await entityManager.find(Device, {
             where: {
                 external_id: data.address,
-                type: 'node'
+                type: DeviceType.Node
             }
         });
 

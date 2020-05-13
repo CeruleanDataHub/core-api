@@ -1,9 +1,11 @@
+import { DeviceType } from './device.entity';
+
 type DeviceWhereClause = {
     id:  string | null,
     external_id: string | null,
     parent_id: string | null,
     name: string | null,
-    type: "node" | "edge" | null
+    type: DeviceType.Node| DeviceType.Edge | null
 }
 
 type DeviceOrderClause = {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Device } from './device.entity';
+import { Device, DeviceType, DeviceStatus } from './device.entity';
 import { DeviceQueryObjectType } from './device-query.interface';
 import { getManager } from 'typeorm';
 import { registerDevice, sendEdgeDeviceDoesNotExist, sendDeviceRegistrationSuccess, sendDeviceAlreadyAssigned } from './device-register';
@@ -40,7 +40,7 @@ export class DeviceService {
             const edgeDevicesByExternalId = await manager.find(Device, {
                 where: {
                     external_id: edgeDeviceExternalId,
-                    type: 'edge'
+                    type: DeviceType.Edge
                 }
             });
 
@@ -58,7 +58,7 @@ export class DeviceService {
             let devicesByExternalId = await manager.find(Device, {
                 where: {
                     external_id: deviceExternalId,
-                    type: 'node'
+                    type: DeviceType.Node
                 },
                 relations: ['parent']
             });
@@ -73,7 +73,7 @@ export class DeviceService {
                 const newDevice = new Device();
                 newDevice.external_id = deviceExternalId;
                 newDevice.name = deviceExternalId;
-                newDevice.type = 'node';
+                newDevice.type = DeviceType.Node;
                 newDevice.deviceEnrollmentGroupId = edgeDevice.deviceEnrollmentGroupId;
                 device = await manager.save(newDevice);
             }
@@ -83,7 +83,7 @@ export class DeviceService {
                     await registerDevice(deviceExternalId);
                     console.log(`Device ${deviceExternalId} registered succesfully. Updating the device in db...`);
                     device.parent = edgeDevice;
-                    device.status = 'active';
+                    device.status = DeviceStatus.Active;
                     await manager.save(device);
                     sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId);
                 } catch (err) {

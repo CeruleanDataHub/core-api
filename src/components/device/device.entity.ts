@@ -1,5 +1,16 @@
 import { Entity, Column, PrimaryGeneratedColumn, Generated, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
+export enum DeviceType {
+    Edge = "edge",
+    Node = "node"
+}
+
+export enum DeviceStatus {
+    Created = "created",
+    Active = "active",
+    Inactive = "inactive"
+}
+
 @Entity({ name: 'device' })
 export class Device {
     @PrimaryGeneratedColumn()
@@ -26,7 +37,7 @@ export class Device {
     deviceEnrollmentGroupId: string
 
     @Column()
-    type: string
+    type: DeviceType
 
     @Column({ type: "point", nullable: true })
     location: string
@@ -38,5 +49,5 @@ export class Device {
     modified: Date
 
     @Column()
-    status: string
+    status: DeviceStatus
 }
