@@ -6,7 +6,6 @@ import { ProvisioningDeviceClient } from 'azure-iot-provisioning-device';
 
 const provisioningHost = process.env.PROVISIONING_HOST;
 const idScope = process.env.ID_SCOPE;
-const primaryKey = process.env.PRIMARY_KEY;
 const serviceConnectionString = process.env.IOTHUB_SERVICE_CONNECTION;
 const mockRegister = process.env.MOCKREGISTER;
 
@@ -35,7 +34,14 @@ class ReturnObject {
     message: string = MESSAGE.DEVICE_REGISTRATION_FAILURE;
 }
 
-const registerDevice = async (registrationId: string): Promise<void> => {
+const registerDevice = async (registrationId: string, device_enrollment_group_id: string): Promise<void> => {
+
+    const primaryKey = process.env[`ENROLLMENT_GROUP_${device_enrollment_group_id}_PRIMARY_KEY`]
+
+    if (!primaryKey) {
+        return Promise.reject(new Error(`Primary key for device enrollment group ${device_enrollment_group_id} not found`));
+    }
+
     const symmetricKey = computeDerivedSymmetricKey(primaryKey, registrationId);
     const provisioningSecurityClient = new SymmetricKeySecurityClient(registrationId, symmetricKey);
     const provisioningClient = ProvisioningDeviceClient.create(

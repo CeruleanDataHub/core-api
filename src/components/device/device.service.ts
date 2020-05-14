@@ -80,14 +80,16 @@ export class DeviceService {
 
             if (!device.parent) {
                 try {
-                    await registerDevice(deviceExternalId);
+                    await registerDevice(deviceExternalId, device.deviceEnrollmentGroupId);
                     console.log(`Device ${deviceExternalId} registered succesfully. Updating the device in db...`);
                     device.parent = edgeDevice;
                     device.status = DeviceStatus.Active;
                     await manager.save(device);
                     sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId);
                 } catch (err) {
-                    console.log("Error registering device", err);
+                   // Catch to avoid rolling back the transaction in case of something wrong in device provisioning service,
+                   // configuration etc. If a new device was inserted, then it stays in the database with 'created' status.
+                   console.log("Error registering device", err);
                 }
             } else {
                 if (device.parent.id === edgeDevice.id) {
