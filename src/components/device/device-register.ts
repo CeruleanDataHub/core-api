@@ -51,7 +51,7 @@ const registerDevice = async (registrationId: string, device_enrollment_group_id
         provisioningSecurityClient
     );
 
-    if (mockRegister) {
+    if (mockRegister === "true") {
         return new Promise((resolve, _) => {
             console.log("MOCKING REGISTRATION");
             resolve();
