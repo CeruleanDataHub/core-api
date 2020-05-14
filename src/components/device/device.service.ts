@@ -33,7 +33,7 @@ export class DeviceService {
         return await this.DeviceRepository.save(device);
     }
 
-    async register(deviceExternalId: string, edgeDeviceExternalId: string) {
+    async register(deviceExternalId: string, edgeDeviceExternalId: string, callbackModule: string, callbackMethod: string) {
         const entityManager = getManager();
         await entityManager.transaction(async manager => {
 
@@ -45,7 +45,7 @@ export class DeviceService {
             });
 
             if (!edgeDevice) {
-                sendEdgeDeviceDoesNotExist(deviceExternalId, edgeDeviceExternalId);
+                sendEdgeDeviceDoesNotExist(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 return;
             }
 
@@ -73,7 +73,7 @@ export class DeviceService {
                     device.parent = edgeDevice;
                     device.status = DeviceStatus.Active;
                     await manager.save(device);
-                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId);
+                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 } catch (err) {
                    // Catch to avoid rolling back the transaction in case of something wrong in device provisioning service,
                    // configuration etc. If a new device was inserted, then it stays in the database with 'created' status.
@@ -82,10 +82,10 @@ export class DeviceService {
             } else {
                 if (device.parent.id === edgeDevice.id) {
                     // Already registered to the edge device
-                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId);
+                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 } else {
                     // Registered to other edge device
-                    sendDeviceAlreadyAssigned(deviceExternalId, edgeDeviceExternalId);
+                    sendDeviceAlreadyAssigned(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 }
             }
         });
