@@ -33,41 +33,29 @@ export class DeviceService {
         return await this.DeviceRepository.save(device);
     }
 
-    async register(deviceExternalId: string, edgeDeviceExternalId: string): Promise<void> {
+    async register(deviceExternalId: string, edgeDeviceExternalId: string) {
         const entityManager = getManager();
         await entityManager.transaction(async manager => {
 
-            const edgeDevicesByExternalId = await manager.find(Device, {
+            const edgeDevice = await manager.findOne(Device, {
                 where: {
                     external_id: edgeDeviceExternalId,
                     type: DeviceType.Edge
                 }
             });
 
-            if (edgeDevicesByExternalId.length > 1) {
-                throw Error(`Multiple edge devices with external id ${edgeDeviceExternalId} found`);
-            }
-
-            if (edgeDevicesByExternalId.length === 0) {
+            if (!edgeDevice) {
                 sendEdgeDeviceDoesNotExist(deviceExternalId, edgeDeviceExternalId);
                 return;
             }
 
-            const edgeDevice = edgeDevicesByExternalId[0];
-
-            let devicesByExternalId = await manager.find(Device, {
+            let device = await manager.findOne(Device, {
                 where: {
                     external_id: deviceExternalId,
                     type: DeviceType.Node
                 },
                 relations: ['parent']
             });
-
-            if (devicesByExternalId.length > 1) {
-                throw Error(`Multiple devices with external id ${deviceExternalId} found`);
-            }
-
-            let device = devicesByExternalId.length === 0 ? false : devicesByExternalId[0];
 
             if (!device) {
                 const newDevice = new Device();
