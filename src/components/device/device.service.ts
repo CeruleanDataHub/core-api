@@ -33,41 +33,29 @@ export class DeviceService {
         return await this.DeviceRepository.save(device);
     }
 
-    async register(deviceExternalId: string, edgeDeviceExternalId: string): Promise<void> {
+    async register(deviceExternalId: string, edgeDeviceExternalId: string, callbackModule: string, callbackMethod: string) {
         const entityManager = getManager();
         await entityManager.transaction(async manager => {
 
-            const edgeDevicesByExternalId = await manager.find(Device, {
+            const edgeDevice = await manager.findOne(Device, {
                 where: {
                     external_id: edgeDeviceExternalId,
                     type: DeviceType.Edge
                 }
             });
 
-            if (edgeDevicesByExternalId.length > 1) {
-                throw Error(`Multiple edge devices with external id ${edgeDeviceExternalId} found`);
-            }
-
-            if (edgeDevicesByExternalId.length === 0) {
-                sendEdgeDeviceDoesNotExist(deviceExternalId, edgeDeviceExternalId);
+            if (!edgeDevice) {
+                sendEdgeDeviceDoesNotExist(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 return;
             }
 
-            const edgeDevice = edgeDevicesByExternalId[0];
-
-            let devicesByExternalId = await manager.find(Device, {
+            let device = await manager.findOne(Device, {
                 where: {
                     external_id: deviceExternalId,
                     type: DeviceType.Node
                 },
                 relations: ['parent']
             });
-
-            if (devicesByExternalId.length > 1) {
-                throw Error(`Multiple devices with external id ${deviceExternalId} found`);
-            }
-
-            let device = devicesByExternalId.length === 0 ? false : devicesByExternalId[0];
 
             if (!device) {
                 const newDevice = new Device();
@@ -80,22 +68,24 @@ export class DeviceService {
 
             if (!device.parent) {
                 try {
-                    await registerDevice(deviceExternalId);
+                    await registerDevice(deviceExternalId, device.deviceEnrollmentGroupId);
                     console.log(`Device ${deviceExternalId} registered succesfully. Updating the device in db...`);
                     device.parent = edgeDevice;
                     device.status = DeviceStatus.Active;
                     await manager.save(device);
-                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId);
+                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 } catch (err) {
-                    console.log("Error registering device", err);
+                   // Catch to avoid rolling back the transaction in case of something wrong in device provisioning service,
+                   // configuration etc. If a new device was inserted, then it stays in the database with 'created' status.
+                   console.log("Error registering device", err);
                 }
             } else {
                 if (device.parent.id === edgeDevice.id) {
                     // Already registered to the edge device
-                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId);
+                    sendDeviceRegistrationSuccess(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 } else {
                     // Registered to other edge device
-                    sendDeviceAlreadyAssigned(deviceExternalId, edgeDeviceExternalId);
+                    sendDeviceAlreadyAssigned(deviceExternalId, edgeDeviceExternalId, callbackModule, callbackMethod);
                 }
             }
         });

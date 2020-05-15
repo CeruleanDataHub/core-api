@@ -5,7 +5,7 @@ import {
     DynamicModule,
 } from '@nestjs/common';
 import { UserManagementModule } from './components/user-management/user-management.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,8 +17,19 @@ import { CorsMiddleware } from './middleware/cors-middleware';
 import { WebhookValidationMiddleware } from './middleware/webhook-validation-middleware';
 import { HealthModule } from './components/health/health.module';
 
-export function getOrmConfig() {
-    const ssl = JSON.parse(process.env.PGSSL);
+export function getOrmConfig(): TypeOrmModuleOptions {
+
+    let ssl: boolean | object = false;
+    if (process.env.PGSSL === "true") {
+        ssl = {
+            rejectUnauthorized: true
+        }
+        if (process.env.PGCACERT) {
+            // PGCACERT env var is expected to contain the ca-cert as base64 encoded string
+            ssl["ca"] = Buffer.from(process.env.PGCACERT, 'base64').toString();
+        }
+    }
+
     return {
         type: 'postgres',
         host: process.env.PGHOST,
@@ -27,7 +38,7 @@ export function getOrmConfig() {
         password: process.env.PGPASSWORD,
         database: process.env.PGDATABASE,
         entities: [Device],
-        ...ssl,
+        ssl: ssl,
         synchronize: false,
         namingStrategy: new SnakeNamingStrategy(),
     };

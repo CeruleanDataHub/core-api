@@ -35,6 +35,6 @@ export class DeviceController {
         console.log("Register device");
         const decodedJson = Buffer.from(body.data.body, 'base64').toString('utf8');
         const data = JSON.parse(decodedJson);
-        return await this.deviceService.register(data.address, data.edgeDeviceId);
+        return await this.deviceService.register(data.address, data.edgeDeviceId, data.callbackModule, data.callbackMethod);
     }
 }

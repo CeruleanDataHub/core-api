@@ -6,7 +6,6 @@ import { ProvisioningDeviceClient } from 'azure-iot-provisioning-device';
 
 const provisioningHost = process.env.PROVISIONING_HOST;
 const idScope = process.env.ID_SCOPE;
-const primaryKey = process.env.PRIMARY_KEY;
 const serviceConnectionString = process.env.IOTHUB_SERVICE_CONNECTION;
 const mockRegister = process.env.MOCKREGISTER;
 
@@ -35,7 +34,14 @@ class ReturnObject {
     message: string = MESSAGE.DEVICE_REGISTRATION_FAILURE;
 }
 
-const registerDevice = async (registrationId: string): Promise<void> => {
+const registerDevice = async (registrationId: string, device_enrollment_group_id: string): Promise<void> => {
+
+    const primaryKey = process.env[`ENROLLMENT_GROUP_${device_enrollment_group_id}_PRIMARY_KEY`]
+
+    if (!primaryKey) {
+        return Promise.reject(new Error(`Primary key for device enrollment group ${device_enrollment_group_id} not found`));
+    }
+
     const symmetricKey = computeDerivedSymmetricKey(primaryKey, registrationId);
     const provisioningSecurityClient = new SymmetricKeySecurityClient(registrationId, symmetricKey);
     const provisioningClient = ProvisioningDeviceClient.create(
@@ -45,7 +51,7 @@ const registerDevice = async (registrationId: string): Promise<void> => {
         provisioningSecurityClient
     );
 
-    if (mockRegister) {
+    if (mockRegister === "true") {
         return new Promise((resolve, _) => {
             console.log("MOCKING REGISTRATION");
             resolve();
@@ -88,14 +94,17 @@ const invokeDirectMethod = (edgeDeviceId: string, moduleId: string, method: stri
         });
     })
 }
-const sendMessage = (registrationId, edgeDeviceId, wasSuccessful, message) => {
+const sendMessage = (edgeDeviceId: string, callbackModule: string, callbackMethod: string, registrationId: string, wasSuccessful: boolean, message: string) => {
     const obj = new ReturnObject();
     obj.registrationId = registrationId;
     obj.edgeDeviceId = edgeDeviceId
     obj.message = message;
     obj.wasSuccessful = wasSuccessful;
 
-    invokeDirectMethod(edgeDeviceId, EDGE_DEVICE_MODULE, DEVICE_REGISTRATION_ATTEMPTED_METHOD, obj)
+    const module = callbackModule || EDGE_DEVICE_MODULE;
+    const method = callbackMethod || DEVICE_REGISTRATION_ATTEMPTED_METHOD;
+
+    invokeDirectMethod(edgeDeviceId, module, method, obj)
         .then(result => {
             console.log(result);
         })
@@ -104,19 +113,19 @@ const sendMessage = (registrationId, edgeDeviceId, wasSuccessful, message) => {
         });
 }
 
-const sendDeviceAlreadyAssigned = (registrationId: string, edgeDeviceId: string) => {
+const sendDeviceAlreadyAssigned = (registrationId: string, edgeDeviceId: string, callbackModule: string, callbackMethod: string) => {
     console.log("Sending device already assigned");
-    sendMessage(registrationId, edgeDeviceId, false, MESSAGE.DEVICE_ALREADY_ASSIGNED);
+    sendMessage(edgeDeviceId, callbackModule, callbackMethod, registrationId, false, MESSAGE.DEVICE_ALREADY_ASSIGNED);
 }
 
-const sendEdgeDeviceDoesNotExist = (registrationId: string, edgeDeviceId: string) => {
+const sendEdgeDeviceDoesNotExist = (registrationId: string, edgeDeviceId: string, callbackModule: string, callbackMethod: string) => {
     console.log("Sending edge device does not exist");
-    sendMessage(registrationId, edgeDeviceId, false, MESSAGE.EDGE_DEVICE_DOES_NOT_EXISTS);
+    sendMessage(edgeDeviceId, callbackModule, callbackMethod,registrationId, false, MESSAGE.EDGE_DEVICE_DOES_NOT_EXISTS);
 }
 
-const sendDeviceRegistrationSuccess = (registrationId: string, edgeDeviceId: string) => {
+const sendDeviceRegistrationSuccess = (registrationId: string, edgeDeviceId: string, callbackModule: string, callbackMethod: string) => {
     console.log("Sending device registration success");
-    sendMessage(registrationId, edgeDeviceId, true, MESSAGE.GENERIC_SUCCESS);
+    sendMessage(edgeDeviceId, callbackModule, callbackMethod, registrationId, true, MESSAGE.GENERIC_SUCCESS);
 }
 
 export { registerDevice, sendEdgeDeviceDoesNotExist, sendDeviceRegistrationSuccess, sendDeviceAlreadyAssigned }
