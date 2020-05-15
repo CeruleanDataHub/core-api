@@ -5,42 +5,35 @@ import { Device, DeviceType } from '../device/device.entity';
 @Injectable()
 export class TelemetryService {
 
-    async save(data): Promise<void> {
+    async save(data) {
 
         const entityManager = getManager();
 
-        let devicesByExternalId = await entityManager.find(Device, {
+        const device = await entityManager.findOne(Device, {
             where: {
                 external_id: data.address,
                 type: DeviceType.Node
             }
         });
 
-        if (devicesByExternalId.length === 0) {
-            throw Error(`No devices with external id ${data.address} found`);
-        }
-        
-        if (devicesByExternalId.length > 1) {
-            throw Error(`Multiple devices with external id ${data.address} found`);
+        if (!device) {
+            throw Error(`No device with external id ${data.address} found`);
         }
 
-        let device = devicesByExternalId[0];
+        const { payload_table_name } = await entityManager.createQueryBuilder()
+            .select("g.payload_table_name")
+            .from("device_enrollment_group", "g")
+            .innerJoin("device", "d", "d.device_enrollment_group_id = g.id")
+            .where("d.id = :id", { id: device.id })
+            .getRawOne();
 
-        entityManager.createQueryBuilder()
+        const telemetry = { ...data, device_id: device.id }
+        delete telemetry.address;
+
+        await entityManager.createQueryBuilder()
             .insert()
-            .into("denim_telemetry.ruuvi_telemetry")
-            .values([
-                {
-                    time: data.time,
-                    temperature: data.temperature,
-                    humidity: data.humidity,
-                    pressure: data.pressure,
-                    tx_power: data.txpower,
-                    voltage: data.voltage,
-                    rssi: data.rssi,
-                    device_id: device.id
-                },
-            ])
+            .into(`denim_telemetry.${payload_table_name}`)
+            .values(telemetry)
             .execute();
     }
 
