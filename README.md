@@ -1,75 +1,45 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# iot-platform-api
 
-[travis-image]: https://api.travis-ci.org/nestjs/nest.svg?branch=master
-[travis-url]: https://travis-ci.org/nestjs/nest
-[linux-image]: https://img.shields.io/travis/nestjs/nest/master.svg?label=linux
-[linux-url]: https://travis-ci.org/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/dm/@nestjs/core.svg" alt="NPM Downloads" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://api.travis-ci.org/nestjs/nest.svg?branch=master" alt="Travis" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://img.shields.io/travis/nestjs/nest/master.svg?label=linux" alt="Linux" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#5" alt="Coverage" /></a>
-<a href="https://gitter.im/nestjs/nestjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge"><img src="https://badges.gitter.im/nestjs/nestjs.svg" alt="Gitter" /></a>
-<a href="https://opencollective.com/nest#backer"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec"><img src="https://img.shields.io/badge/Donate-PayPal-dc3d53.svg"/></a>
-  <a href="https://twitter.com/nestframework"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+NodeJS app that provides an API for managing devices, users and telemetry data in the iot-platform.
 
-## Description
+## Configuration
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Following environment variables are supported:
 
-## Installation
-
-```bash
-$ npm install
+```
+PGHOST=<Postgres host>
+PGPORT=<Posgres port>
+PGUSER=<Postgres user>
+PGPASSWORD=<Postgres password>
+PGDATABASE=<Postgres database name>
+PGSSL=<Use SSL in postgres connection, true / false>
+PGCACERT=<CA-cert for postgres connection in base64 encoded string (needed for example if self-signed cert is used in Postgres server)>
+AUTH0_API=<Auth0 API url>
+AUTH0_CLIENT_ID=<Auth0 Client ID>
+AUTH0_CLIENT_SECRET=<Auth0 Client secret>
+IOTHUB_SERVICE_CONNECTION=<IoT Hub connection string>
+MOCKREGISTER=<Mock device provisioning, true / false>
+PROVISIONING_HOST=<Device provisioning service endpoint>
+ID_SCOPE=<Device provisioning service ID Scope>
+ENROLLMENT_GROUP_1_PRIMARY_KEY=<Primary key of the enrollment group 1>
+ENROLLMENT_GROUP_2_PRIMARY_KEY=<Primary key of the enrollment group 2>
+...
 ```
 
-## Running the app
+See [Device provisioning](#device-provisioning) for more details about ENROLLMENT_GROUP_x_PRIMARY_KEY env-vars.
 
-```bash
-# development
-$ npm run start
+## Development environment
 
-# watch mode
-$ npm run start:dev
+In the development environment env-vars can be put into .env file in the project root.
 
-# production mode
-$ npm run start:prod
+```
+# Install dependencies
+npm install
+
+# Start the application (listens on port 3000)
+npm run start:dev
 ```
 
-## Test
+## Device provisioning
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-  Nest is [MIT licensed](LICENSE).
+Device provisioning supports provisioning iot-devices to multiple enrollment groups. When a device is provisioned it is registered into the same enrollment group as the edge-device that initiated the registration. The primary-key of the enrollment group is read from an env-var with name ENROLLMENT_GROUP_\<id\>_PRIMARY_KEY, where \<id\> is the id of the enrollment group.
