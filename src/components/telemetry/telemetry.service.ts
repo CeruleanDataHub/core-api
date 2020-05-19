@@ -4,41 +4,42 @@ import { Device, DeviceType } from '../device/device.entity';
 
 @Injectable()
 export class TelemetryService {
-
     async save(data): Promise<void> {
-
         const entityManager = getManager();
 
         let devicesByExternalId = await entityManager.find(Device, {
             where: {
                 external_id: data.address,
-                type: DeviceType.Node
-            }
+                type: DeviceType.Node,
+            },
         });
 
         if (devicesByExternalId.length === 0) {
             throw Error(`No devices with external id ${data.address} found`);
         }
-        
+
         if (devicesByExternalId.length > 1) {
-            throw Error(`Multiple devices with external id ${data.address} found`);
+            throw Error(
+                `Multiple devices with external id ${data.address} found`,
+            );
         }
 
         let device = devicesByExternalId[0];
 
-        entityManager.createQueryBuilder()
+        entityManager
+            .createQueryBuilder()
             .insert()
-            .into("denim_telemetry.ruuvi_telemetry")
+            .into('denim_telemetry.ruuvi_telemetry')
             .values([
                 {
                     time: data.time,
                     temperature: data.temperature,
                     humidity: data.humidity,
                     pressure: data.pressure,
-                    tx_power: data.txpower,
+                    tx_power: data.tx_power,
                     voltage: data.voltage,
                     rssi: data.rssi,
-                    device_id: device.id
+                    device_id: device.id,
                 },
             ])
             .execute();
@@ -75,9 +76,11 @@ export class TelemetryService {
         const columns = postBody.columns;
         let result = null;
         await entityManager.transaction(async manager => {
-            await manager.query("SELECT denim_telemetry.telemetry_query('cursor', $1, to_timestamp($2), to_timestamp($3), $4);",
-                [tableName, startDate, endDate, columns]);
-            result = await manager.query("FETCH ALL IN \"cursor\"");
+            await manager.query(
+                "SELECT denim_telemetry.telemetry_query('cursor', $1, to_timestamp($2), to_timestamp($3), $4);",
+                [tableName, startDate, endDate, columns],
+            );
+            result = await manager.query('FETCH ALL IN "cursor"');
         });
         return result;
     }
