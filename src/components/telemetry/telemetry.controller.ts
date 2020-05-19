@@ -61,7 +61,7 @@ export class TelemetryController {
             level: postBody.data.properties.level,
         });
 
-        return this.telemetryService.save(data);
+        this.telemetryService.save(data);
     }
 
     /*
