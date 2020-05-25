@@ -43,7 +43,7 @@ export class HierarchyController {
     }
 
     @Delete('/:id')
-    async remove(@Param('id') id: string): Promise<any> {
+    async remove(@Param('id') id: string): Promise<string> {
         return await this.hierarchyService.remove(id);
     }
 }

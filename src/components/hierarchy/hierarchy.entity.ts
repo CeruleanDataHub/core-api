@@ -4,13 +4,12 @@ import {
     PrimaryGeneratedColumn,
     Generated,
     ManyToOne,
-    OneToMany,
     JoinColumn,
     CreateDateColumn,
     UpdateDateColumn,
 } from 'typeorm';
 
-export enum HierarhcyStatus {
+export enum HierarchyStatus {
     Created = 'created',
     Active = 'active',
     Inactive = 'inactive',
@@ -29,20 +28,20 @@ export class Hierarchy {
     @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
     parent: Hierarchy;
 
-    @Column()
+    @Column({ nullable: true })
     tenant_id: string;
 
     // parent.path + ownUUID + /
     @Column()
     path: string;
 
-    @Column({ nullable: true })
+    @Column()
     type: string;
 
-    @Column()
+    @Column({ nullable: true })
     name: string;
 
-    @Column()
+    @Column({ nullable: true })
     description: string;
 
     @Column({ type: 'point', nullable: true })
@@ -56,8 +55,8 @@ export class Hierarchy {
 
     @Column({
         type: 'enum',
-        enum: HierarhcyStatus,
-        default: HierarhcyStatus.Created,
+        enum: HierarchyStatus,
+        default: HierarchyStatus.Created,
     })
-    status: HierarhcyStatus;
+    status: HierarchyStatus;
 }
