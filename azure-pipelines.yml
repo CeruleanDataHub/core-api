@@ -1,6 +1,7 @@
-# Docker
-# Build and push an image to Azure Container Registry
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+# - Builds an image and pushes it to the container registry (tag name comes from the version in package.json)
+# - Creates a new tag and pushes it to remote git repo (tag name comes from the version in package.json)
+# - Waits until the new version of the app is running in Azure App Services
+# - Imports the API to Azure Api Management
 
 trigger:
 - development
@@ -60,3 +61,39 @@ stages:
         git tag
         git push origin $(versionNumber)
       name: gitTagVersion
+
+- stage: Wait
+  displayName: Wait for app
+  jobs:
+  - job: 'waitForApp'
+    displayName: 'Wait until app is running'
+    pool: Server
+    steps:
+    - task: Delay@1
+      inputs:
+        delayForMinutes: '8'
+
+- stage: Import
+  displayName: Import API
+  jobs:
+  - job: importApi
+    displayName: Import API
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzurePowerShell@4
+      displayName: Import API to API Management
+      inputs:
+        ConnectedServiceNameARM: "Open IoT Platform Development (577ca25f-6232-4268-930d-92a642f2819e)"
+        ScriptType: 'inlineScript'
+        Inline: |
+          $resourceGroupName = "Temp_RG_IoT_Platform"
+          $serviceName = "ddh-api"
+          $apiId = "iot-api"
+          $specificationFormat = "OpenApi"
+          $specificationUrl = "https://iot-platform-db-api.azurewebsites.net/open-api-json"
+          $path = "api"
+          $apiVersion = "v1"
+          $azcontext = New-AzApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
+          Import-AzApiManagementApi -Context $azcontext -SpecificationFormat $specificationFormat -SpecificationUrl $specificationUrl -ApiId $apiId -Path $path -ApiVersion $apiVersion
+        TargetAzurePs: latestVersion
