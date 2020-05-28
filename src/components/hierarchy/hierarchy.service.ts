@@ -40,54 +40,27 @@ export class HierarchyService {
 
         const entityManager = getManager();
         return await entityManager.transaction(async manager => {
-            if (hierarchy.parent) {
-                const parent = await manager.findOne(Hierarchy, {
-                    where: {
-                        parent_id: hierarchy.parent,
-                    },
-                });
-                newHierarchy = await manager.save(hierarchy);
-                const childPath = parent.path + newHierarchy.uuid + '/';
-                newHierarchy.path = childPath;
-                delete newHierarchy.modified;
-                await manager.update(
-                    Hierarchy,
-                    {
-                        id: newHierarchy.id,
-                    },
-                    newHierarchy,
-                );
-            } else {
-                newHierarchy = await manager.save(hierarchy);
-            }
+            newHierarchy = await manager.save(hierarchy);
 
-            const token = await this.getToken();
-            const allScopes = await axios({
-                method: 'GET',
-                url: `${process.env.AUTH0_API}/resource-servers/${process.env.AUTH0_APP_SERVER_ID}`,
-                headers: { authorization: 'Bearer ' + token },
-            })
-                .then(resp => resp.data.scopes)
-                .catch(_ => {
-                    throw new BadRequestException();
-                });
+            const allScopes = await this.getAllScopes();
 
-            axios({
-                method: 'PATCH',
-                url: `${process.env.AUTH0_API}/resource-servers/${process.env.AUTH0_APP_SERVER_ID}`,
-                headers: { authorization: 'Bearer ' + token },
-                data: {
-                    scopes: [
-                        ...allScopes,
-                        {
-                            value: `uuid:${newHierarchy.uuid}`,
-                            description: `permission for ${newHierarchy.uuid}`,
-                        },
-                    ],
+            const scopes = [
+                ...allScopes,
+                {
+                    value: `uuid:${newHierarchy.uuid}:read`,
+                    description: `read permission for ${newHierarchy.uuid}`,
                 },
-            }).catch(_ => {
-                throw new BadRequestException();
-            });
+                {
+                    value: `uuid:${newHierarchy.uuid}:write`,
+                    description: `write permission for ${newHierarchy.uuid}`,
+                },
+                {
+                    value: `uuid:${newHierarchy.uuid}:execute`,
+                    description: `execute permission for ${newHierarchy.uuid}`,
+                },
+            ];
+
+            this.setPermissions(scopes);
 
             return newHierarchy;
         });
@@ -127,6 +100,7 @@ export class HierarchyService {
             const h: any = { ...hier };
             h.title = h.name;
             h.subtitle = h.description;
+            h.expanded = true;
             if (h.parent) {
                 h.parent = h.parent.id;
             }
@@ -140,28 +114,72 @@ export class HierarchyService {
     }
 
     async update(id: string, hierarchy: any): Promise<UpdateResult> {
-        if (hierarchy.parent === '-1') {
-            if (!hierarchy.uuid) {
-                const child = await this.HierarchyRepository.findOne(id);
-                hierarchy.uuid = child.uuid;
-            }
-            hierarchy.path = hierarchy.uuid + '/';
-            hierarchy.parent = null;
-            return this.HierarchyRepository.update(id, hierarchy);
-        }
-        const parent = await this.HierarchyRepository.findOne(hierarchy.parent);
-        if (!hierarchy.uuid) {
-            const child = await this.HierarchyRepository.findOne(id);
-            hierarchy.uuid = child.uuid;
-        }
-        hierarchy.path = parent.path + hierarchy.uuid + '/';
+        // if (hierarchy.parent === '-1') {
+        //     if (!hierarchy.uuid) {
+        //         const child = await this.HierarchyRepository.findOne(id);
+        //         hierarchy.uuid = child.uuid;
+        //     }
+        //     hierarchy.path = hierarchy.uuid + '/';
+        //     hierarchy.parent = null;
+        //     return this.HierarchyRepository.update(id, hierarchy);
+        // }
+        // const parent = await this.HierarchyRepository.findOne(hierarchy.parent);
+        // if (!hierarchy.uuid) {
+        //     const child = await this.HierarchyRepository.findOne(id);
+        //     hierarchy.uuid = child.uuid;
+        // }
+        // hierarchy.path = parent.path + hierarchy.uuid + '/';
         return this.HierarchyRepository.update(id, hierarchy);
     }
 
+    getAllScopes = async () => {
+        return await axios({
+            method: 'GET',
+            url: `${process.env.AUTH0_API}/resource-servers/${process.env.AUTH0_APP_SERVER_ID}`,
+            headers: { authorization: 'Bearer ' + (await this.getToken()) },
+        })
+            .then(resp => resp.data.scopes)
+            .catch(_ => {
+                throw new BadRequestException();
+            });
+    };
+
+    setPermissions = async scopes => {
+        return await axios({
+            method: 'PATCH',
+            url: `${process.env.AUTH0_API}/resource-servers/${process.env.AUTH0_APP_SERVER_ID}`,
+            headers: { authorization: 'Bearer ' + (await this.getToken()) },
+            data: {
+                scopes: scopes,
+            },
+        }).catch(_ => {
+            throw new BadRequestException();
+        });
+    };
     async remove(id: string): Promise<string> {
-        const respResult: DeleteResult = await this.HierarchyRepository.delete(
-            id,
-        );
+        let respResult: DeleteResult;
+        try {
+            const hierarchyToDelete = await this.HierarchyRepository.findOne(
+                id,
+            );
+            const uuidToDelete = hierarchyToDelete.uuid;
+            respResult = await this.HierarchyRepository.delete(id);
+
+            const allScopes = await this.getAllScopes();
+
+            const filteredScopes = allScopes.filter(
+                scope => !scope.value.includes(uuidToDelete),
+            );
+
+            this.setPermissions(filteredScopes);
+        } catch (err) {
+            if (
+                err.message &&
+                err.message.includes('violates foreign key constraint')
+            ) {
+                throw new BadRequestException('contains children');
+            }
+        }
 
         if (!respResult || respResult.affected === 0) {
             throw new BadRequestException();
