@@ -58,4 +58,7 @@ export class Device {
         default: DeviceStatus.Created
     })
     status: DeviceStatus
+
+    @Column()
+    path: string
 }
