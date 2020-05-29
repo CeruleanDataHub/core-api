@@ -7,43 +7,44 @@ import {
     Body,
     Param,
 } from '@nestjs/common';
-import { AppService } from './app.service';
 import { Registry } from 'azure-iothub';
+import { ApiOperation, ApiTags, ApiParam, ApiResponse, ApiProperty } from '@nestjs/swagger';
+
+class DesiredProperties {
+    @ApiProperty()
+    desired: object;
+}
+
+class TwinState {
+    @ApiProperty()
+    properties: DesiredProperties;
+}
+
+class UpdateTwinDto {
+    @ApiProperty()
+    id: string;
+    @ApiProperty()
+    state: TwinState;
+}
 
 @Controller()
 export class AppController {
-    constructor(private readonly appService: AppService) {}
 
-    @Get('/')
-    getBase(): string {
-        return this.appService.getBaseApi();
-    }
-
-    /*
-        {
-            id: TWIN_ID,
-            state: {
-                properties: {
-                    desired: {
-                        powerLevel: 9000
-                    }
-                }
-            }
-        }
-    */
     @Post('/twin/update')
+    @ApiOperation({ summary: 'Update device twin desired properties' })
+    @ApiTags('device twin')
     async postUpdateTwin(
-        @Body() postTwin: any, //TODO object type
-    ): Promise<any> {
-        var registry = Registry.fromConnectionString(
+        @Body() postTwin: UpdateTwinDto,
+    ): Promise<void> {
+        const registry = Registry.fromConnectionString(
             process.env.IOTHUB_SERVICE_CONNECTION,
         );
-        registry.getTwin(postTwin.id, async (err, twin) => {
+        registry.getTwin(postTwin.id, (err, twin) => {
             if (err) {
                 console.log('error updating twin:', err);
                 throw new NotFoundException();
             } else {
-                twin.update(postTwin.state, (err, twin) => {
+                twin.update(postTwin.state, (err) => {
                     if (err) {
                         console.error(err.message);
                     } else {
@@ -56,6 +57,11 @@ export class AppController {
     }
 
     @Get('/twin/:id')
+    @ApiOperation({ summary: 'Get device twin' })
+    @ApiTags('device twin')
+    @ApiParam({ name: 'id', description: 'External ID of the device (device ID / registration ID in Azure IoT Hub)' })
+    @ApiResponse({ status: 200, description: 'OK'})
+    @ApiResponse({ status: 404, description: 'Device not found' })
     async getTwin(@Param('id') id: string): Promise<any> {
         var registry = Registry.fromConnectionString(
             process.env.IOTHUB_SERVICE_CONNECTION,

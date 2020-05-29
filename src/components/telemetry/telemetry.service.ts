@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { getManager } from 'typeorm';
 import { Device, DeviceType } from '../device/device.entity';
+import { TelemetryQueryDto, NewSchemaDto } from './telemetry.controller';
 
 @Injectable()
 export class TelemetryService {
@@ -38,7 +39,7 @@ export class TelemetryService {
     }
 
     async postNewSchema(
-        newSchema: any, //TODO object type
+        newSchema: NewSchemaDto,
     ): Promise<any> {
         const entityManager = getManager();
         let tableName = newSchema.name;
@@ -58,19 +59,17 @@ export class TelemetryService {
         });
     }
 
-    async postTelemetryQuery(
-        postBody: any, //TODO object type
-    ): Promise<any> {
+    async postTelemetryQuery(query: TelemetryQueryDto): Promise<object[]> {
         const entityManager = getManager();
-        const tableName = postBody.table;
-        const startDate = new Date(postBody.startDate).getTime() / 1000;
-        const endDate = new Date(postBody.endDate).getTime() / 1000;
-        const columns = postBody.columns;
+        const tableName = query.table;
+        const startDate = new Date(query.startDate).getTime() / 1000;
+        const endDate = new Date(query.endDate).getTime() / 1000;
+        const columns = query.columns;
         let result = null;
         await entityManager.transaction(async manager => {
             await manager.query("SELECT denim_telemetry.telemetry_query('cursor', $1, to_timestamp($2), to_timestamp($3), $4);",
                 [tableName, startDate, endDate, columns]);
-            result = await manager.query("FETCH ALL IN \"cursor\"");
+            result = await manager.query("FETCH ALL IN cursor");
         });
         return result;
     }

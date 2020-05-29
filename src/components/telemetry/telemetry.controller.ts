@@ -1,8 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { Between, FindOperator } from 'typeorm';
 import { TelemetryService } from './telemetry.service';
 import { TelemetryStatusGateway } from './telemetry-status.gateway';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 class NameTypeObject {
     @ApiProperty()
@@ -11,14 +11,26 @@ class NameTypeObject {
     type: string;
 }
 
-class NewSchemaDto {
+export class NewSchemaDto {
     @ApiProperty()
     name: string;
     @ApiProperty({ type: [NameTypeObject] })
     columns: NameTypeObject[];
 }
 
+export class TelemetryQueryDto {
+    @ApiProperty({ example: 'ruuvi_telemetry' })
+    table: string;
+    @ApiProperty()
+    startDate: Date;
+    @ApiProperty()
+    endDate: Date;
+    @ApiProperty({ example: ['time', 'temperature'] })
+    columns: string[]
+}
+
 @Controller('/telemetry')
+@ApiTags('telemetry')
 export class TelemetryController {
     constructor(
         private readonly telemetryService: TelemetryService,
@@ -45,11 +57,13 @@ export class TelemetryController {
         }
      */
     @Post('/new-schema')
+    @ApiOperation({ summary: 'Insert telemetry schema' })
     async postNewSchema(@Body() newSchema: NewSchemaDto): Promise<any> {
         await this.telemetryService.postNewSchema(newSchema);
     }
 
     @Post('/')
+    @ApiOperation({ summary: 'Insert telemetry data' })
     async insertTelemetry(@Body() postBody: any): Promise<any> {
         const decodedJson = Buffer.from(postBody.data.body, 'base64').toString(
             'utf8',
@@ -64,21 +78,12 @@ export class TelemetryController {
         this.telemetryService.save(data);
     }
 
-    /*
-        {
-            table: TABLENAME,
-            startDate: DATE,
-            endDate: DATE,
-            columns: [
-                COLUMS,
-                ARRAY
-            ]
-        }
-    */
     @Post('/telemetry-query')
+    @ApiOperation({ summary: 'Query telemetry data' })
+    @HttpCode(HttpStatus.OK)
     async postQuery(
-        @Body() postBody: any
-    ): Promise<any> {
-        return await this.telemetryService.postTelemetryQuery(postBody);
+        @Body() query: TelemetryQueryDto
+    ): Promise<object[]> {
+        return await this.telemetryService.postTelemetryQuery(query);
     }
 }

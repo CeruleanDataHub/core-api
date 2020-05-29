@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, Generated, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger'
 
 export enum DeviceType {
     Edge = "edge",
@@ -14,26 +15,33 @@ export enum DeviceStatus {
 @Entity({ name: 'device' })
 export class Device {
     @PrimaryGeneratedColumn()
+    @ApiProperty()
     id: string;
 
     @Column()
     @Generated("uuid")
+    @ApiProperty()
     uuid: string
 
     @Column({ nullable: true })
+    @ApiProperty()
     external_id: string;
 
     @ManyToOne(type => Device)
     @JoinColumn({ name: "parent_id", referencedColumnName: "id" })
+    @ApiProperty({ type: "Device" })
     parent: Device;
 
     @Column()
+    @ApiProperty()
     name: string
 
     @Column({ nullable: true })
+    @ApiProperty()
     description: string
 
     @Column()
+    @ApiProperty()
     deviceEnrollmentGroupId: string
 
     @Column({
@@ -41,15 +49,19 @@ export class Device {
         enum: DeviceType,
         default: DeviceType.Node
     })
+    @ApiProperty()
     type: DeviceType
 
     @Column({ type: "point", nullable: true })
+    @ApiProperty()
     location: string
 
     @CreateDateColumn({ type: "timestamp"})
+    @ApiProperty()
     created: Date
 
     @UpdateDateColumn({ type: "timestamp"})
+    @ApiProperty()
     modified: Date
 
     @Column({
@@ -57,8 +69,10 @@ export class Device {
         enum: DeviceStatus,
         default: DeviceStatus.Created
     })
+    @ApiProperty()
     status: DeviceStatus
 
     @Column()
+    @ApiProperty()
     path: string
 }
