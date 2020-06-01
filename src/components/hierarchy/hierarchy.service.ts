@@ -129,7 +129,7 @@ export class HierarchyService {
         //     hierarchy.uuid = child.uuid;
         // }
         // hierarchy.path = parent.path + hierarchy.uuid + '/';
-        return this.HierarchyRepository.update(id, hierarchy);
+        return await this.HierarchyRepository.update(id, hierarchy);
     }
 
     getAllScopes = async () => {
