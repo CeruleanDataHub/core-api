@@ -114,21 +114,6 @@ export class HierarchyService {
     }
 
     async update(id: string, hierarchy: any): Promise<UpdateResult> {
-        // if (hierarchy.parent === '-1') {
-        //     if (!hierarchy.uuid) {
-        //         const child = await this.HierarchyRepository.findOne(id);
-        //         hierarchy.uuid = child.uuid;
-        //     }
-        //     hierarchy.path = hierarchy.uuid + '/';
-        //     hierarchy.parent = null;
-        //     return this.HierarchyRepository.update(id, hierarchy);
-        // }
-        // const parent = await this.HierarchyRepository.findOne(hierarchy.parent);
-        // if (!hierarchy.uuid) {
-        //     const child = await this.HierarchyRepository.findOne(id);
-        //     hierarchy.uuid = child.uuid;
-        // }
-        // hierarchy.path = parent.path + hierarchy.uuid + '/';
         return await this.HierarchyRepository.update(id, hierarchy);
     }
 
@@ -157,13 +142,13 @@ export class HierarchyService {
         });
     };
     async remove(id: string): Promise<string> {
+        const entityManager = getManager();
+
         let respResult: DeleteResult;
-        try {
-            const hierarchyToDelete = await this.HierarchyRepository.findOne(
-                id,
-            );
+        await entityManager.transaction(async manager => {
+            const hierarchyToDelete = await manager.findOne(Hierarchy, id);
             const uuidToDelete = hierarchyToDelete.uuid;
-            respResult = await this.HierarchyRepository.delete(id);
+            respResult = await manager.delete(Hierarchy, id);
 
             const allScopes = await this.getAllScopes();
 
@@ -172,14 +157,7 @@ export class HierarchyService {
             );
 
             this.setPermissions(filteredScopes);
-        } catch (err) {
-            if (
-                err.message &&
-                err.message.includes('violates foreign key constraint')
-            ) {
-                throw new BadRequestException('contains children');
-            }
-        }
+        });
 
         if (!respResult || respResult.affected === 0) {
             throw new BadRequestException();
