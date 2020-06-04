@@ -26,7 +26,16 @@ export class TelemetryQueryDto {
     @ApiProperty()
     endDate: Date;
     @ApiProperty({ example: ['time', 'temperature'] })
-    columns: string[]
+    columns: string[];
+}
+
+export class TelemetryLatestDto {
+    @ApiProperty({ example: 'ruuvi_telemetry' })
+    table: string;
+    @ApiProperty({ example: ['time', 'temperature'] })
+    columns: string[];
+    @ApiProperty()
+    limit: number;
 }
 
 @Controller('/telemetry')
@@ -81,9 +90,16 @@ export class TelemetryController {
     @Post('/telemetry-query')
     @ApiOperation({ summary: 'Query telemetry data' })
     @HttpCode(HttpStatus.OK)
-    async postQuery(
-        @Body() query: TelemetryQueryDto
-    ): Promise<object[]> {
+    async postQuery(@Body() query: TelemetryQueryDto): Promise<object[]> {
         return await this.telemetryService.postTelemetryQuery(query);
+    }
+
+    @Post('/telemetry-latest')
+    @ApiOperation({ summary: 'Query latest telemetry data' })
+    @HttpCode(HttpStatus.OK)
+    async latestTelemetry(
+        @Body() query: TelemetryLatestDto,
+    ): Promise<object[]> {
+        return await this.telemetryService.latestTelemetry(query);
     }
 }
