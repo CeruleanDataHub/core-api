@@ -4,6 +4,7 @@ import { Repository, UpdateResult, getManager, DeleteResult } from 'typeorm';
 import axios from 'axios';
 
 import { Hierarchy } from './hierarchy.entity';
+import { HierarchyQueryObjectType } from './hierarchy-query.interface';
 
 @Injectable()
 export class HierarchyService {
@@ -111,6 +112,10 @@ export class HierarchyService {
 
     find(id): Promise<Hierarchy> {
         return this.HierarchyRepository.findOne(id);
+    }
+
+    findWhere(query: HierarchyQueryObjectType): Promise<Hierarchy[]> {
+        return this.HierarchyRepository.find(query);
     }
 
     async update(id: string, hierarchy: any): Promise<UpdateResult> {

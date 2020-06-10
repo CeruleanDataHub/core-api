@@ -7,11 +7,14 @@ import {
     Param,
     Put,
     Delete,
+    HttpCode,
+    HttpStatus,
 } from '@nestjs/common';
 
 import { Hierarchy } from './hierarchy.entity';
 import { HierarchyService } from './hierarchy.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { HierarchyQueryObjectType } from './hierarchy-query.interface';
 
 @Controller('/hierarchy')
 @ApiTags('hierarchy')
@@ -38,6 +41,13 @@ export class HierarchyController {
     @ApiOperation({ summary: 'Get hierarchy' })
     async get(@Param('id') id: string): Promise<Hierarchy> {
         return await this.hierarchyService.find(id);
+    }
+
+    @Post('/find-where')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Find hierarchies' })
+    async postFindWhere(@Body() queryObject: HierarchyQueryObjectType ): Promise<Hierarchy[]> {
+        return await this.hierarchyService.findWhere(queryObject);
     }
 
     @Put('/:id')
