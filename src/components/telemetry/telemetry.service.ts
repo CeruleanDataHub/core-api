@@ -65,14 +65,15 @@ export class TelemetryService {
     async postTelemetryQuery(query: TelemetryQueryDto): Promise<object[]> {
         const entityManager = getManager();
         const tableName = query.table;
+        const deviceId = query.deviceId;
         const startDate = new Date(query.startDate).getTime() / 1000;
         const endDate = new Date(query.endDate).getTime() / 1000;
         const columns = query.columns;
         let result = null;
         await entityManager.transaction(async manager => {
             await manager.query(
-                "SELECT denim_telemetry.telemetry_query('cursor', $1, to_timestamp($2), to_timestamp($3), $4);",
-                [tableName, startDate, endDate, columns],
+                "SELECT denim_telemetry.telemetry_query('cursor', $1, $2, to_timestamp($3), to_timestamp($4), $5);",
+                [tableName, deviceId, startDate, endDate, columns],
             );
             result = await manager.query('FETCH ALL IN cursor');
         });
@@ -82,14 +83,15 @@ export class TelemetryService {
     async latestTelemetry(query: TelemetryLatestDto): Promise<object[]> {
         const entityManager = getManager();
         const tableName = query.table;
+        const deviceId = query.deviceId;
         const columns = query.columns;
         const limit = query.limit;
         let result = null;
 
         await entityManager.transaction(async manager => {
             await manager.query(
-                "SELECT denim_telemetry.telemetry_latest('cursor', $1, $2, $3);",
-                [tableName, columns, limit],
+                "SELECT denim_telemetry.telemetry_latest('cursor', $1, $2, $3, $4);",
+                [tableName, deviceId, columns, limit],
             );
             result = await manager.query('FETCH ALL IN cursor');
         });

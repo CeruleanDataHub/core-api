@@ -21,12 +21,14 @@ export class NewSchemaDto {
 export class TelemetryQueryDto {
     @ApiProperty({ example: 'ruuvi_telemetry' })
     table: string;
-    @ApiProperty()
+    @ApiProperty({ required: false })
     startDate: Date;
-    @ApiProperty()
+    @ApiProperty({ required: false })
     endDate: Date;
     @ApiProperty({ example: ['time', 'temperature'] })
     columns: string[];
+    @ApiProperty({ required: false, example: "1" })
+    deviceId: string
 }
 
 export class TelemetryLatestDto {
@@ -34,8 +36,10 @@ export class TelemetryLatestDto {
     table: string;
     @ApiProperty({ example: ['time', 'temperature'] })
     columns: string[];
-    @ApiProperty()
+    @ApiProperty({ example: 10 })
     limit: number;
+    @ApiProperty({ required: false, example: "1" })
+    deviceId: string
 }
 
 @Controller('/telemetry')
