@@ -75,4 +75,8 @@ export class Device {
     @Column()
     @ApiProperty()
     path: string
+
+    @Column()
+    @ApiProperty()
+    hierarchy_id: string
 }

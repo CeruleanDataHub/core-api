@@ -16,6 +16,7 @@ export class DeviceController {
     }
 
     @Post('/find-where')
+    @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Find devices' })
     async postFindWhere(@Body() queryObject: DeviceQueryObjectType ): Promise<Device[]> { // TODO input validation
         return await this.deviceService.findWhere(queryObject);
