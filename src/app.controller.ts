@@ -6,6 +6,8 @@ import {
     BadRequestException,
     Body,
     Param,
+    HttpCode,
+    HttpStatus,
 } from '@nestjs/common';
 import { Registry } from 'azure-iothub';
 import { ApiOperation, ApiTags, ApiParam, ApiResponse, ApiProperty } from '@nestjs/swagger';
@@ -33,26 +35,38 @@ export class AppController {
     @Post('/twin/update')
     @ApiOperation({ summary: 'Update device twin desired properties' })
     @ApiTags('device twin')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: 'OK'})
+    @ApiResponse({ status: 404, description: 'Device not found' })
     async postUpdateTwin(
         @Body() postTwin: UpdateTwinDto,
     ): Promise<void> {
         const registry = Registry.fromConnectionString(
             process.env.IOTHUB_SERVICE_CONNECTION,
         );
-        registry.getTwin(postTwin.id, (err, twin) => {
-            if (err) {
-                console.log('error updating twin:', err);
-                throw new NotFoundException();
-            } else {
-                twin.update(postTwin.state, (err) => {
-                    if (err) {
-                        console.error(err.message);
+
+        return new Promise<void>((resolve, reject) => {
+            registry.getTwin(postTwin.id, (err, twin) => {
+                if (err) {
+                    console.error('error updating twin', err.name);
+                    if (err.name === "DeviceNotFoundError") {
+                        reject(new NotFoundException());
                     } else {
-                        console.log('Sent patch:');
-                        console.log(JSON.stringify(postTwin.state, null, 2));
+                        reject(err);
                     }
-                });
-            }
+                } else {
+                    return twin.update(postTwin.state, (err) => {
+                        if (err) {
+                            console.error(err.name);
+                            reject(err);
+                        } else {
+                            console.log('Sent patch:');
+                            console.log(JSON.stringify(postTwin.state, null, 2));
+                            resolve();
+                        }
+                    });
+                }
+            });
         });
     }
 
