@@ -17,7 +17,7 @@ import { UserManagementModule } from './components/user-management/user-manageme
 import { TelemetryModule } from './components/telemetry/telemetry.module';
 import { HierarchyModule } from './components/hierarchy/hierarchy.module';
 import { Hierarchy } from './components/hierarchy/hierarchy.entity';
-
+import { IdentityEvent } from './components/identity/identity-event.module';
 import { HealthModule } from './components/health/health.module';
 
 export function getOrmConfig(): TypeOrmModuleOptions {
@@ -57,13 +57,14 @@ export class AppModule implements NestModule {
                 UserManagementModule,
                 HierarchyModule,
                 HealthModule,
+                IdentityEvent
             ],
             controllers: [AppController],
             providers: [AppService],
         };
     }
     configure(consumer: MiddlewareConsumer) {
-        const webhookUrls = ['/device/register', '/telemetry'];
+        const webhookUrls = ['/device/register', '/telemetry', '/identity-event'];
         for (const webhookUrl of webhookUrls) {
             consumer.apply(WebhookValidationMiddleware).forRoutes({
                 path: webhookUrl,
