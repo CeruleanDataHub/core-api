@@ -1,17 +1,10 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiProperty, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Post, Body, Get } from '@nestjs/common';
+import { ApiProperty, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { getManager } from 'typeorm';
-import { Stream } from 'stream';
 
 const EVENT_SOURCE = 'auth0';
 
-class Auth0EventData {
-    @ApiProperty()
-    date: Date;
-
-    @ApiProperty()
-    type: string;
-
+class BaseEvent {
     @ApiProperty()
     connection: string;
 
@@ -35,7 +28,7 @@ class Auth0EventData {
 
     @ApiProperty()
     user_id: string;
-    
+
     @ApiProperty()
     user_name: string;
 
@@ -52,21 +45,52 @@ class Auth0EventData {
     description: string;
 }
 
-class Auth0Event {
+class IdentityEvent extends BaseEvent {
     @ApiProperty()
-    type: string;
+    source: string;
 
     @ApiProperty()
-    data: Auth0EventData;
+    time: Date;
+}
+
+class Auth0Event extends BaseEvent {
+    @ApiProperty()
+    date: Date;
+
+    @ApiProperty()
+    type: string;
+}
+
+class EventGridEvent {
+    @ApiProperty()
+    type: string; // com.auth0.Log
+
+    @ApiProperty()
+    data: Auth0Event;
 }
 
 @Controller('/identity-event')
 @ApiTags('identity')
 export class IdentityEventController {
 
+    @Get()
+    @ApiOperation({ summary: 'Get the 100 latest identity events' })
+    @ApiResponse({status: 200, type: IdentityEvent, isArray: true, description: 'Returns 100 identity events' })
+    async getIdentityEvents(): Promise<IdentityEvent[]> {
+        const entityManager = getManager();
+
+        return await entityManager
+            .createQueryBuilder()
+            .select()
+            .from('denim.identity_event', '')
+            .orderBy('time', 'DESC')
+            .limit(100)
+            .execute();
+    }
+
     @Post('/')
     @ApiOperation({ summary: 'Insert identity event' })
-    async insertIdentityEvent(@Body() auth0Event: Auth0Event) {
+    async insertIdentityEvent(@Body() auth0Event: EventGridEvent) {
 
         if (auth0Event.type !== 'com.auth0.Log') {
             console.log(`Ignoring event type ${auth0Event.type}`);
