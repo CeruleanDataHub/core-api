@@ -73,7 +73,7 @@ class EventGridAuth0Event {
 @ApiTags('identity')
 export class IdentityEventController {
 
-    @Get()
+    @Get('/latest')
     @ApiOperation({ summary: 'Get the 100 latest identity events' })
     @ApiResponse({status: 200, type: IdentityEvent, isArray: true, description: 'Returns 100 identity events' })
     async getIdentityEvents(): Promise<IdentityEvent[]> {
