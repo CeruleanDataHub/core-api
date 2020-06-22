@@ -61,7 +61,7 @@ class Auth0Event extends BaseEvent {
     type: string;
 }
 
-class EventGridEvent {
+class EventGridAuth0Event {
     @ApiProperty()
     type: string; // com.auth0.Log
 
@@ -90,7 +90,7 @@ export class IdentityEventController {
 
     @Post('/')
     @ApiOperation({ summary: 'Insert identity event' })
-    async insertIdentityEvent(@Body() auth0Event: EventGridEvent) {
+    async insertIdentityEvent(@Body() auth0Event: EventGridAuth0Event) {
 
         if (auth0Event.type !== 'com.auth0.Log') {
             console.log(`Ignoring event type ${auth0Event.type}`);
