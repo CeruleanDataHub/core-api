@@ -1,45 +1,75 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { Between, FindOperator } from 'typeorm';
 import { TelemetryService } from './telemetry.service';
 import { TelemetryStatusGateway } from './telemetry-status.gateway';
-import { ApiProperty, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiProperty, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 
-class NameTypeObject {
-    @ApiProperty()
-    name: string;
-    @ApiProperty()
-    type: string;
+class TelemetryRowOrder {
+    @ApiProperty({ example: 'DESC'} )
+    time:  'ASC' | 'DESC';
 }
 
-export class NewSchemaDto {
-    @ApiProperty()
-    name: string;
-    @ApiProperty({ type: [NameTypeObject] })
-    columns: NameTypeObject[];
-}
-
-export class TelemetryQueryDto {
-    @ApiProperty({ example: 'ruuvi_telemetry' })
-    table: string;
+export class TelemetryQuery {
+    @ApiProperty({ example: 1 })
+    deviceId: number
+    @ApiProperty({ example: 'temperature' })
+    sensorName: string;
     @ApiProperty({ required: false })
     startDate: Date;
     @ApiProperty({ required: false })
     endDate: Date;
-    @ApiProperty({ example: ['time', 'temperature'] })
-    columns: string[];
-    @ApiProperty({ required: false, example: "1" })
-    deviceId: string
+    @ApiProperty({ required: false })
+    order: TelemetryRowOrder;
+    @ApiProperty({ example: 10, required: false })
+    limit: number;
 }
 
-export class TelemetryLatestDto {
-    @ApiProperty({ example: 'ruuvi_telemetry' })
-    table: string;
-    @ApiProperty({ example: ['time', 'temperature'] })
-    columns: string[];
-    @ApiProperty({ example: 10 })
-    limit: number;
-    @ApiProperty({ required: false, example: "1" })
-    deviceId: string
+export class TelemetryRow {
+    @ApiProperty()
+    time: Date;
+    @ApiProperty()
+    deviceId: number;
+    @ApiProperty()
+    sensorName: string;
+    @ApiProperty()
+    unit: string;
+    @ApiProperty()
+    valueType: string;
+    @ApiProperty()
+    valueDouble: number;
+    @ApiProperty()
+    valueInt: number;
+    @ApiProperty()
+    valueString: string;
+}
+
+export class AggregateTelemetryQuery extends TelemetryQuery {
+    @ApiProperty({ example: 'HOURLY' })
+    type: 'HOURLY' | 'DAILY' | 'WEEKLY'
+}
+
+export class AggregateTelemetryRow {
+    @ApiProperty()
+    time: Date;
+    @ApiProperty()
+    deviceId: number;
+    @ApiProperty()
+    sensorName: string;
+    @ApiProperty()
+    unit: string;
+    @ApiProperty()
+    valueType: string;
+    @ApiProperty()
+    avgValueDouble: number;
+    @ApiProperty()
+    maxValueDouble: number;
+    @ApiProperty()
+    minValueDouble: number;
+    @ApiProperty()
+    avgValueInt: number;
+    @ApiProperty()
+    maxValueInt: number;
+    @ApiProperty()
+    minValueInt: number;
 }
 
 @Controller('/telemetry')
@@ -49,31 +79,6 @@ export class TelemetryController {
         private readonly telemetryService: TelemetryService,
         private readonly telemetryStatusGateway: TelemetryStatusGateway,
     ) {}
-
-    // if request's where contains arrays(min, max) use typeorm's Between(), otherwise return as is
-    handleBetween(
-        whereClause: string | FindOperator<string> | null,
-    ): string | FindOperator<string> | null {
-        if (Array.isArray(whereClause)) {
-            const [min, max] = whereClause;
-            return Between(min, max);
-        }
-        return whereClause;
-    }
-
-    /*
-        {
-            name: RUUVITAG,
-            columns: [
-                {name: TEMPERATURE, type: NUMERIC}
-            ]
-        }
-     */
-    @Post('/new-schema')
-    @ApiOperation({ summary: 'Insert telemetry schema' })
-    async postNewSchema(@Body() newSchema: NewSchemaDto): Promise<any> {
-        await this.telemetryService.postNewSchema(newSchema);
-    }
 
     @Post('/')
     @ApiOperation({ summary: 'Insert telemetry data' })
@@ -88,22 +93,22 @@ export class TelemetryController {
             level: postBody.data.properties.level,
         });
 
-        this.telemetryService.save(data);
+        return this.telemetryService.insert(data);
     }
 
-    @Post('/telemetry-query')
+    @Post('/query')
     @ApiOperation({ summary: 'Query telemetry data' })
     @HttpCode(HttpStatus.OK)
-    async postQuery(@Body() query: TelemetryQueryDto): Promise<object[]> {
-        return await this.telemetryService.postTelemetryQuery(query);
+    @ApiResponse({status: HttpStatus.OK, type: TelemetryRow, isArray: true, description: 'Returns telemetry data' })
+    async queryTelemetry(@Body() query: TelemetryQuery): Promise<TelemetryRow[]> {
+        return await this.telemetryService.query(query);
     }
 
-    @Post('/telemetry-latest')
-    @ApiOperation({ summary: 'Query latest telemetry data' })
+    @Post('/query-aggregate')
+    @ApiOperation({ summary: 'Query aggregate telemetry data' })
     @HttpCode(HttpStatus.OK)
-    async latestTelemetry(
-        @Body() query: TelemetryLatestDto,
-    ): Promise<object[]> {
-        return await this.telemetryService.latestTelemetry(query);
+    @ApiResponse({status: HttpStatus.OK, type: AggregateTelemetryRow, isArray: true, description: 'Returns aggregate telemetry data' })
+    async queryAggregateTelemetry(@Body() query: AggregateTelemetryQuery): Promise<AggregateTelemetryRow[]> {
+        return await this.telemetryService.queryAggregate(query);
     }
 }

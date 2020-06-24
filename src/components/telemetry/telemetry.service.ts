@@ -1,17 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { getManager } from 'typeorm';
+import { getManager, InsertResult } from 'typeorm';
 import { Device, DeviceType } from '../device/device.entity';
 import {
-    TelemetryQueryDto,
-    NewSchemaDto,
-    TelemetryLatestDto,
+    TelemetryQuery,
+    TelemetryRow,
+    AggregateTelemetryQuery,
+    AggregateTelemetryRow
 } from './telemetry.controller';
 const moment = require('moment-timezone');
 
 @Injectable()
 export class TelemetryService {
-    async save(data) {
+    async insert(data): Promise<InsertResult> {
         const entityManager = getManager();
+
+        const externalId = data.address;
 
         const device = await entityManager.findOne(Device, {
             where: {
@@ -21,86 +24,161 @@ export class TelemetryService {
         });
 
         if (!device) {
-            throw Error(`No device with external id ${data.address} found`);
+            throw Error(`No device with external_id ${externalId} found`);
         }
 
-        const { payload_table_name } = await entityManager
+        const sensors = await entityManager
             .createQueryBuilder()
-            .select('g.payload_table_name')
-            .from('device_enrollment_group', 'g')
-            .innerJoin('device', 'd', 'd.device_enrollment_group_id = g.id')
-            .where('d.id = :id', { id: device.id })
-            .getRawOne();
+            .select(['s.id', 's.name', 's.value_type'])
+            .from('sensor','s')
+            .where('s.device_enrollment_group_id = :device_enrollment_group_id', {
+                device_enrollment_group_id: device.deviceEnrollmentGroupId,
+            }).getRawMany();
 
-        const telemetry = { ...data, device_id: device.id };
-        delete telemetry.address;
+        const keys = Object.keys(data);
 
-        await entityManager
+        const telemetry = [];
+
+        for (let i=0;i<keys.length;i++) {
+
+            const sensorName = keys[i];
+
+            if (['time','address'].includes(sensorName)) { continue; }
+
+            const sensor = sensors.find((s) => s.name == sensorName);
+
+            if (!sensor) {
+                console.error(`No sensor with device_enrollment_group_id ${device.deviceEnrollmentGroupId} and name ${sensorName} found, skipping...`);
+                continue;
+            }
+
+            const valueType = sensor.value_type;
+
+            const row = {
+                time: data.time,
+                device_id: device.id,
+                sensor_id: sensor['id']
+            };
+
+            switch(valueType) {
+                case 'double':
+                    row['value_double'] = data[sensorName];
+                    break;
+                case 'integer':
+                    row['value_int'] = data[sensorName];
+                    break;
+                case 'string':
+                    row['value_string'] = data[sensorName];
+                    break;
+                default:
+                  throw Error(`Invalid value_type ${sensor.value_type}`)
+            }
+
+            telemetry.push(row);
+        }
+
+        return await entityManager
             .createQueryBuilder()
             .insert()
-            .into(`denim_telemetry.${payload_table_name}`)
+            .into('telemetry')
             .values(telemetry)
             .execute();
     }
 
-    async postNewSchema(newSchema: NewSchemaDto): Promise<any> {
+    async query(query: TelemetryQuery): Promise<TelemetryRow[]> {
         const entityManager = getManager();
-        let tableName = newSchema.name;
-        const columns = newSchema.columns;
-        await entityManager.transaction(async manager => {
-            await manager.query(
-                'SELECT denim_telemetry.denim_telemetry_create_table($1)',
-                [tableName],
-            );
-            columns.forEach(async col => {
-                const colQuery = col.name + ' ' + col.type;
-                await manager.query(
-                    'SELECT denim_telemetry.denim_telemetry_alter_table($1, $2)',
-                    [tableName, colQuery],
-                );
+
+        const dbQuery = entityManager
+            .createQueryBuilder()
+            .select([
+                'time',
+                'device_id AS "deviceId"',
+                's.name AS "sensorName"',
+                's.unit',
+                's.value_type AS "valueType"',
+                'value_double AS "valueDouble"',
+                'value_int AS "valueInt"',
+                'value_string AS "valueString"'
+            ])
+            .from('telemetry','t')
+            .innerJoin('sensor', 's', 't.sensor_id = s.id')
+            .where('t.device_id = :device_id AND s.name = :sensor_name', {
+                device_id: query.deviceId,
+                sensor_name: query.sensorName
             });
-        });
+
+        if (query.startDate) {
+            dbQuery.andWhere('time >= :start_date', { start_date: query.startDate });
+        }
+
+        if (query.endDate) {
+            dbQuery.andWhere('time <= :end_date', { end_date: query.endDate });
+        }
+
+        if (query.order) {
+            if (query.order.time) {
+                dbQuery.orderBy('time', query.order.time);
+            }
+        }
+
+        if (query.limit) {
+            dbQuery.limit(query.limit);
+        }
+
+        return await dbQuery.getRawMany();
     }
 
-    async postTelemetryQuery(query: TelemetryQueryDto): Promise<object[]> {
+    async queryAggregate(query: AggregateTelemetryQuery): Promise<AggregateTelemetryRow[]> {
         const entityManager = getManager();
-        const tableName = query.table;
-        const deviceId = query.deviceId;
-        const startDate = new Date(query.startDate).getTime() / 1000;
-        const endDate = new Date(query.endDate).getTime() / 1000;
-        const columns = query.columns;
-        let result = null;
-        await entityManager.transaction(async manager => {
-            await manager.query(
-                "SELECT denim_telemetry.telemetry_query('cursor', $1, $2, to_timestamp($3), to_timestamp($4), $5);",
-                [tableName, deviceId, startDate, endDate, columns],
-            );
-            result = await manager.query('FETCH ALL IN cursor');
-        });
-        return result;
-    }
 
-    async latestTelemetry(query: TelemetryLatestDto): Promise<object[]> {
-        const entityManager = getManager();
-        const tableName = query.table;
-        const deviceId = query.deviceId;
-        const columns = query.columns;
-        const limit = query.limit;
-        let result = null;
+        const aggregateViews = {
+            'HOURLY': 'telemetry_hourly',
+            'DAILY': 'telemetry_daily',
+            'WEEKLY': 'telemetry_weekly'
+        }
 
-        await entityManager.transaction(async manager => {
-            await manager.query(
-                "SELECT denim_telemetry.telemetry_latest('cursor', $1, $2, $3, $4);",
-                [tableName, deviceId, columns, limit],
-            );
-            result = await manager.query('FETCH ALL IN cursor');
-        });
-        result.map(res => {
-            res.time = moment(res.time)
-                .tz('Europe/Helsinki')
-                .format();
-            return res;
-        });
-        return result;
+        const aggregateView = aggregateViews[query.type];
+
+        const dbQuery = entityManager
+            .createQueryBuilder()
+            .select([
+                'time',
+                'device_id AS "deviceId"',
+                's.name AS "sensorName"',
+                's.unit',
+                's.value_type AS "valueType"',
+                'avg_value_double AS "avgValueDouble"',
+                'max_value_double AS "maxValueDouble"',
+                'min_value_double AS "minValueDouble"',
+                'avg_value_int AS "avgValueInt"',
+                'max_value_int AS "maxValueInt"',
+                'min_value_int AS "minValueInt"'
+            ])
+            .from(aggregateView, 't')
+            .innerJoin('sensor', 's', 't.sensor_id = s.id')
+            .where('t.device_id = :device_id AND s.name = :sensor_name', {
+                device_id: query.deviceId,
+                sensor_name: query.sensorName
+            });
+
+        if (query.startDate) {
+            dbQuery.andWhere('time >= :start_date', { start_date: query.startDate });
+        }
+
+        if (query.endDate) {
+            dbQuery.andWhere('time <= :end_date', { end_date: query.endDate });
+        }
+
+        if (query.order) {
+            if (query.order.time) {
+                dbQuery.orderBy('time', query.order.time);
+            }
+        }
+
+        if (query.limit) {
+            dbQuery.limit(query.limit);
+        }
+
+        return await dbQuery.getRawMany();
     }
 }
