@@ -82,7 +82,7 @@ export class IdentityEventController {
         return await entityManager
             .createQueryBuilder()
             .select()
-            .from('denim.identity_event', '')
+            .from('identity_event', '')
             .orderBy('time', 'DESC')
             .limit(100)
             .execute();
@@ -123,7 +123,7 @@ export class IdentityEventController {
         await entityManager
             .createQueryBuilder()
             .insert()
-            .into('denim.identity_event')
+            .into('identity_event')
             .values(identityEvent)
             .execute();
 
