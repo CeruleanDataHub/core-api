@@ -57,18 +57,21 @@ export class TelemetryService {
             const row = {
                 time: data.time,
                 device_id: device.id,
-                sensor_id: sensor['id']
+                sensor_id: sensor['id'],
+                value_double: null,
+                value_int: null,
+                value_string: null
             };
 
             switch(valueType) {
                 case 'double':
-                    row['value_double'] = data[sensorName];
+                    row.value_double = data[sensorName];
                     break;
                 case 'integer':
-                    row['value_int'] = data[sensorName];
+                    row.value_int = data[sensorName];
                     break;
                 case 'string':
-                    row['value_string'] = data[sensorName];
+                    row.value_string = data[sensorName];
                     break;
                 default:
                   throw Error(`Invalid value_type ${sensor.value_type}`)
@@ -80,7 +83,7 @@ export class TelemetryService {
         return await entityManager
             .createQueryBuilder()
             .insert()
-            .into('telemetry')
+            .into('telemetry', ['time', 'device_id', 'sensor_id', 'value_double', 'value_int', 'value_string'])
             .values(telemetry)
             .execute();
     }
