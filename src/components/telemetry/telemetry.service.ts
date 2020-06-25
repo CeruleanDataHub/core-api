@@ -153,7 +153,7 @@ export class TelemetryService {
                 'avg_value_double AS "avgValueDouble"',
                 'max_value_double AS "maxValueDouble"',
                 'min_value_double AS "minValueDouble"',
-                'avg_value_int AS "avgValueInt"',
+                'avg_value_int::double precision AS "avgValueInt"',
                 'max_value_int AS "maxValueInt"',
                 'min_value_int AS "minValueInt"'
             ])
