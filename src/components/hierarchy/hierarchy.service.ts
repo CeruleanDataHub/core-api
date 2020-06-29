@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult, getManager, DeleteResult } from 'typeorm';
+import { Repository, getManager } from 'typeorm';
 import axios from 'axios';
 
 import { Hierarchy } from './hierarchy.entity';
@@ -118,8 +118,16 @@ export class HierarchyService {
         return this.HierarchyRepository.find(query);
     }
 
-    async update(id: string, hierarchy: any): Promise<UpdateResult> {
-        return await this.HierarchyRepository.update(id, hierarchy);
+    async update(id: string, hierarchy: any): Promise<any> {
+        const entityManager = getManager();
+
+        return await entityManager.transaction(async manager => {
+            const hierarchyToUpdate = await manager.findOne(Hierarchy, id);
+            if (!hierarchyToUpdate) {
+                throw new NotFoundException();
+            }
+            manager.update(Hierarchy, { id: id }, hierarchy);
+        });
     }
 
     getAllScopes = async () => {
@@ -129,8 +137,9 @@ export class HierarchyService {
             headers: { authorization: 'Bearer ' + (await this.getToken()) },
         })
             .then(resp => resp.data.scopes)
-            .catch(_ => {
-                throw new BadRequestException();
+            .catch(err => {
+                console.log('Error getting scopes', err);
+                throw new InternalServerErrorException();
             });
     };
 
@@ -142,31 +151,30 @@ export class HierarchyService {
             data: {
                 scopes: scopes,
             },
-        }).catch(_ => {
-            throw new BadRequestException();
+        }).catch(err => {
+            console.log('Error setting permissions', err);
+            throw new InternalServerErrorException();
         });
     };
-    async remove(id: string): Promise<string> {
+
+    async remove(id: string): Promise<any> {
         const entityManager = getManager();
 
-        let respResult: DeleteResult;
-        await entityManager.transaction(async manager => {
+        return await entityManager.transaction(async manager => {
             const hierarchyToDelete = await manager.findOne(Hierarchy, id);
-            const uuidToDelete = hierarchyToDelete.uuid;
-            respResult = await manager.delete(Hierarchy, id);
+            if (!hierarchyToDelete) {
+                throw new NotFoundException();
+            }
+            await manager.delete(Hierarchy, id);
 
             const allScopes = await this.getAllScopes();
 
+            const uuidToDelete = hierarchyToDelete.uuid;
             const filteredScopes = allScopes.filter(
                 scope => !scope.value.includes(uuidToDelete),
             );
 
             this.setPermissions(filteredScopes);
         });
-
-        if (!respResult || respResult.affected === 0) {
-            throw new BadRequestException();
-        }
-        return `No of affected rows: ${respResult.affected}`;
     }
 }

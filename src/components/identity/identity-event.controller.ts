@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, HttpStatus } from '@nestjs/common';
 import { ApiProperty, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { getManager } from 'typeorm';
 
@@ -75,7 +75,7 @@ export class IdentityEventController {
 
     @Get('/latest')
     @ApiOperation({ summary: 'Get the 100 latest identity events' })
-    @ApiResponse({status: 200, type: IdentityEvent, isArray: true, description: 'Returns 100 identity events' })
+    @ApiResponse({status: 200, type: IdentityEvent, isArray: true, description: 'Success' })
     async getIdentityEvents(): Promise<IdentityEvent[]> {
         const entityManager = getManager();
 
@@ -90,6 +90,7 @@ export class IdentityEventController {
 
     @Post('/')
     @ApiOperation({ summary: 'Insert identity event' })
+    @ApiResponse({status: HttpStatus.CREATED, description: 'Identity event inserted' })
     async insertIdentityEvent(@Body() auth0Event: EventGridAuth0Event) {
 
         if (auth0Event.type !== 'com.auth0.Log') {

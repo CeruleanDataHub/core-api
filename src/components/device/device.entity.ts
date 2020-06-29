@@ -29,7 +29,7 @@ export class Device {
 
     @ManyToOne(type => Device)
     @JoinColumn({ name: "parent_id", referencedColumnName: "id" })
-    @ApiProperty({ type: "Device" })
+    @ApiProperty({ type: Device, required: false })
     parent: Device;
 
     @Column()
@@ -37,7 +37,7 @@ export class Device {
     name: string
 
     @Column({ nullable: true })
-    @ApiProperty()
+    @ApiProperty({ required: false })
     description: string
 
     @Column()
@@ -53,7 +53,7 @@ export class Device {
     type: DeviceType
 
     @Column({ type: "point", nullable: true })
-    @ApiProperty()
+    @ApiProperty({ required: false })
     location: string
 
     @CreateDateColumn({ type: "timestamp"})
@@ -76,7 +76,7 @@ export class Device {
     @ApiProperty()
     path: string
 
-    @Column()
-    @ApiProperty()
+    @Column({ nullable: true })
+    @ApiProperty({ required: false })
     hierarchy_id: string
 }

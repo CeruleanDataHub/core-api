@@ -82,6 +82,7 @@ export class TelemetryController {
 
     @Post('/')
     @ApiOperation({ summary: 'Insert telemetry data' })
+    @ApiResponse({status: HttpStatus.CREATED, description: 'Telemetry data inserted' })
     async insertTelemetry(@Body() postBody: any): Promise<any> {
         const decodedJson = Buffer.from(postBody.data.body, 'base64').toString(
             'utf8',
@@ -99,7 +100,7 @@ export class TelemetryController {
     @Post('/query')
     @ApiOperation({ summary: 'Query telemetry data' })
     @HttpCode(HttpStatus.OK)
-    @ApiResponse({status: HttpStatus.OK, type: TelemetryRow, isArray: true, description: 'Returns telemetry data' })
+    @ApiResponse({status: HttpStatus.OK, type: TelemetryRow, isArray: true, description: 'Success' })
     async queryTelemetry(@Body() query: TelemetryQuery): Promise<TelemetryRow[]> {
         return await this.telemetryService.query(query);
     }
@@ -107,7 +108,7 @@ export class TelemetryController {
     @Post('/query-aggregate')
     @ApiOperation({ summary: 'Query aggregate telemetry data' })
     @HttpCode(HttpStatus.OK)
-    @ApiResponse({status: HttpStatus.OK, type: AggregateTelemetryRow, isArray: true, description: 'Returns aggregate telemetry data' })
+    @ApiResponse({status: HttpStatus.OK, type: AggregateTelemetryRow, isArray: true, description: 'Success' })
     async queryAggregateTelemetry(@Body() query: AggregateTelemetryQuery): Promise<AggregateTelemetryRow[]> {
         return await this.telemetryService.queryAggregate(query);
     }

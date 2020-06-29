@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Device, DeviceType, DeviceStatus } from './device.entity';
@@ -25,8 +25,15 @@ export class DeviceService {
         return this.DeviceRepository.find(query);
     }
 
-    async remove(id: string): Promise<void> {
-        await this.DeviceRepository.delete(id);
+    async remove(id: string): Promise<any> {
+        const entityManager = getManager();
+        return await entityManager.transaction(async manager => {
+            const device = await manager.findOne(Device, id);
+            if (!device) {
+                throw new NotFoundException();
+            }
+            return manager.delete(Device, { id: id });
+        });
     }
 
     async insert(device: Device): Promise<Device> {
@@ -35,7 +42,7 @@ export class DeviceService {
 
     async register(deviceExternalId: string, edgeDeviceExternalId: string, callbackModule: string, callbackMethod: string) {
         const entityManager = getManager();
-        await entityManager.transaction(async manager => {
+        return await entityManager.transaction(async manager => {
 
             const edgeDevice = await manager.findOne(Device, {
                 where: {

@@ -29,11 +29,11 @@ export class Hierarchy {
 
     @ManyToOne(type => Hierarchy)
     @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
-    @ApiProperty({ type: 'Hierarchy' })
+    @ApiProperty({ type: Hierarchy, required: false })
     parent: Hierarchy;
 
     @Column({ nullable: true })
-    @ApiProperty()
+    @ApiProperty({ required: false })
     tenant_id: string;
 
     // parent.path + ownUUID + /
@@ -46,15 +46,15 @@ export class Hierarchy {
     type: string;
 
     @Column({ nullable: true })
-    @ApiProperty()
+    @ApiProperty({ required: false })
     name: string;
 
     @Column({ nullable: true })
-    @ApiProperty()
+    @ApiProperty({ required: false })
     description: string;
 
     @Column({ type: 'point', nullable: true })
-    @ApiProperty()
+    @ApiProperty({ required: false })
     location: string;
 
     @CreateDateColumn({ type: 'timestamp' })
