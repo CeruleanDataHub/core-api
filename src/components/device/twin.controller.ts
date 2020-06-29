@@ -30,13 +30,13 @@ class UpdateTwinDto {
 }
 
 @Controller()
-export class AppController {
+export class TwinController {
 
     @Post('/twin/update')
     @ApiOperation({ summary: 'Update device twin desired properties' })
     @ApiTags('device twin')
     @HttpCode(HttpStatus.OK)
-    @ApiResponse({ status: 200, description: 'OK'})
+    @ApiResponse({ status: 200, description: 'Success'})
     @ApiResponse({ status: 404, description: 'Device not found' })
     async postUpdateTwin(
         @Body() postTwin: UpdateTwinDto,
@@ -74,7 +74,7 @@ export class AppController {
     @ApiOperation({ summary: 'Get device twin' })
     @ApiTags('device twin')
     @ApiParam({ name: 'id', description: 'External ID of the device (device ID / registration ID in Azure IoT Hub)' })
-    @ApiResponse({ status: 200, description: 'OK'})
+    @ApiResponse({ status: 200, description: 'Success'})
     @ApiResponse({ status: 404, description: 'Device not found' })
     async getTwin(@Param('id') id: string): Promise<any> {
         var registry = Registry.fromConnectionString(

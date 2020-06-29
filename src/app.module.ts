@@ -9,7 +9,6 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { CorsMiddleware } from './middleware/cors-middleware';
 import { WebhookValidationMiddleware } from './middleware/webhook-validation-middleware';
 
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Device } from './components/device/device.entity';
 import { DeviceModule } from './components/device/device.module';
@@ -59,7 +58,6 @@ export class AppModule implements NestModule {
                 HealthModule,
                 IdentityEvent
             ],
-            controllers: [AppController],
             providers: [AppService],
         };
     }
