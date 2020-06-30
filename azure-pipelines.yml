@@ -12,7 +12,7 @@ resources:
 - repo: self
 
 variables:
-- group: IoT-Platform-db-Api
+- group: core-api
 
 stages:
 - stage: Build
@@ -86,16 +86,16 @@ stages:
     - task: AzurePowerShell@4
       displayName: Import API to API Management
       inputs:
-        ConnectedServiceNameARM: "Open IoT Platform Development (577ca25f-6232-4268-930d-92a642f2819e)"
+        ConnectedServiceNameARM: $(connectedServiceNameARM)
         ScriptType: 'inlineScript'
         Inline: |
-          $resourceGroupName = "Temp_RG_IoT_Platform"
-          $serviceName = "ddh-api"
-          $apiId = "iot-api"
-          $specificationFormat = "OpenApi"
-          $specificationUrl = "https://iot-platform-db-api.azurewebsites.net/open-api-json"
-          $path = "api"
-          $apiVersion = "v1"
+          $resourceGroupName = $(azureResourceGroupName)
+          $serviceName = $(apiManagementServiceName)
+          $apiId = $(apiManagementApiId)
+          $specificationFormat = $(openApiSpecificationFormat)
+          $specificationUrl = $(openApiSpecificationUrl)
+          $path = $(apiManagementPath)
+          $apiVersion = $(apiManagementVersion)
           $azcontext = New-AzApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
           Import-AzApiManagementApi -Context $azcontext -SpecificationFormat $specificationFormat -SpecificationUrl $specificationUrl -ApiId $apiId -Path $path -ApiVersion $apiVersion
         TargetAzurePs: latestVersion
