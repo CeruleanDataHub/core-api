@@ -89,13 +89,13 @@ stages:
         ConnectedServiceNameARM: $(connectedServiceNameARM)
         ScriptType: 'inlineScript'
         Inline: |
-          $resourceGroupName = $(azureResourceGroupName)
-          $serviceName = $(apiManagementServiceName)
-          $apiId = $(apiManagementApiId)
-          $specificationFormat = $(openApiSpecificationFormat)
-          $specificationUrl = $(openApiSpecificationUrl)
-          $path = $(apiManagementPath)
-          $apiVersion = $(apiManagementVersion)
+          $resourceGroupName = "$(azureResourceGroupName)"
+          $serviceName = "$(apiManagementServiceName)"
+          $apiId = "$(apiManagementApiId)"
+          $specificationFormat = "$(openApiSpecificationFormat)"
+          $specificationUrl = "$(openApiSpecificationUrl)"
+          $path = "$(apiManagementPath)"
+          $apiVersion = "$(apiManagementVersion)"
           $azcontext = New-AzApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
           Import-AzApiManagementApi -Context $azcontext -SpecificationFormat $specificationFormat -SpecificationUrl $specificationUrl -ApiId $apiId -Path $path -ApiVersion $apiVersion
         TargetAzurePs: latestVersion
