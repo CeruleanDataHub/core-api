@@ -1,16 +1,25 @@
-FROM node:12.14-alpine
+FROM --platform=$TARGETPLATFORM node:lts-slim  as builder
 
 WORKDIR /usr/src/app
 
-COPY . ./
+COPY package.json .
 
 RUN npm install
+
+COPY src .
+COPY tsconfig.json .
+COPY tsconfig.build.json .
+
 RUN npm run build
 
-# Create non root user
-RUN addgroup -S oipusergroup && adduser -S oipuser -G oipusergroup
-USER oipuser
+FROM --platform=$TARGETPLATFORM node:lts-slim
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/dist /usr/src/app/dist
+
+USER node
 
 EXPOSE 3000
 
-CMD ["npm", "run" ,"start"]
+CMD ["node", "dist/main"]
