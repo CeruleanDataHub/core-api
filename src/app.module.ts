@@ -10,6 +10,7 @@ import { CorsMiddleware } from './middleware/cors-middleware';
 import { WebhookValidationMiddleware } from './middleware/webhook-validation-middleware';
 
 import { AppService } from './app.service';
+import { CiEventsModule } from './components/ci-events/ci-events.module';
 import { Device } from './components/device/device.entity';
 import { DeviceModule } from './components/device/device.module';
 import { UserManagementModule } from './components/user-management/user-management.module';
@@ -56,13 +57,19 @@ export class AppModule implements NestModule {
                 UserManagementModule,
                 HierarchyModule,
                 HealthModule,
-                IdentityEvent
+                IdentityEvent,
+                CiEventsModule,
             ],
             providers: [AppService],
         };
     }
     configure(consumer: MiddlewareConsumer) {
-        const webhookUrls = ['/device/register', '/telemetry', '/identity-event'];
+        const webhookUrls = [
+            '/device/register',
+            '/telemetry',
+            '/identity-event',
+            '/cloud-ci-events',
+        ];
         for (const webhookUrl of webhookUrls) {
             consumer.apply(WebhookValidationMiddleware).forRoutes({
                 path: webhookUrl,
