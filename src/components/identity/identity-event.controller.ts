@@ -192,6 +192,6 @@ export class IdentityEventController {
     async queryUserActivity(
         @Body() query: AggregateActiveUserQuery,
     ): Promise<AggregateActiveUsers> {
-        return await this.identityEventService.queryAggregate(query);
+        return await this.identityEventService.queryUserActivity(query);
     }
 }
