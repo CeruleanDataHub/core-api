@@ -9,11 +9,13 @@ import * as bodyParser from 'body-parser';
 
 declare const module: any;
 async function bootstrap() {
+    const app = await NestFactory.create(AppModule.forRoot());
+
     if (module.hot) {
         module.hot.accept();
         module.hot.dispose(() => app && app.close());
     }
-    const app = await NestFactory.create(AppModule.forRoot());
+
     // Handle requests with content-types "application/json" and "application/cloudevents+json"
     app.use(
         bodyParser.json({
