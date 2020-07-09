@@ -85,7 +85,7 @@ jobs:
         run: |
           UUID=$(uuidgen)
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          DATA="{ \"name\": \"Docker push ${{ steps.push.outcome }}\", \"image_name\": \"${{ steps.prepare.outputs.docker_image }}\", \"version\": \"${{ steps.prepare.outputs.version }}\" }"
+          DATA="{ \"name\": \"Docker push ${{ steps.push.outcome }}\", \"actor\":\"${{ github.actor }}\",\"commit\":\"${{ github.sha }}\", \"image_name\": \"${{ steps.prepare.outputs.docker_image }}\", \"version\": \"${{ steps.prepare.outputs.version }}\" }"
           EVENT="{ \"specversion\": \"1.0\", \"type\": \"network.cdh.cloud-ci-${{ steps.push.outcome }}\", \"source\": \"github.com/${{ github.repository }}\", \"id\": \"${UUID}\", \"time\": \"${TIMESTAMP}\", \"datacontenttype\": \"application/json\", \"data\": ${DATA} }"
           curl -X POST -H "aeg-sas-key: ${{ secrets.EVENTGRID_KEY }}" -H "content-type":"application/cloudevents+json; charset=utf-8" -d "$EVENT" ${{ secrets.EVENTGRID_ENDPOINT }}
       -
