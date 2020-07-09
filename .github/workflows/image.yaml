@@ -74,3 +74,13 @@ jobs:
         if: always() && github.event_name != 'pull_request'
         run: |
           rm -f ${HOME}/.docker/config.json
+
+      - 
+        name: Send Eventgrid message
+        if: always()
+        run: |
+          UUID=$(uuidgen)
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          DATA="{ "name": "Docker push ${{ steps.push.outcome }}", "image_name": "ceruleandatahub/${DOCKER_IMAGE}", "version": ${VERSION} }"
+          EVENT="{ "specversion" : "1.x-wip", "type" : "network.cdh.cloud-ci-${{ steps.push.outcome }}", "source" : "github.com/CeruleanDataHub/core-api", "id": "${UUID}", "time": "${TIMESTAMP}", "datacontenttype" : "application/json", "data": "${DATA}" }"
+          curl -X POST -H "aeg-sas-key: ${{ secrets.EVENTGRID_KEY }}" -d "$EVENT" ${{ secrets.EVENTGRID_ENDPOINT }}
