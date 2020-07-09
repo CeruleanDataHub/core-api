@@ -76,8 +76,8 @@ export class HierarchyService {
         const parentAttr = 'parent';
         const childrenAttr = 'children';
 
-        var treeList = [];
-        var lookup = {};
+        const treeList = [];
+        const lookup = {};
         list.forEach(obj => {
             lookup[obj[idAttr]] = obj;
             obj[childrenAttr] = [];

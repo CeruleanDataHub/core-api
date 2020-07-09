@@ -5,9 +5,8 @@ import {
     TelemetryQuery,
     TelemetryRow,
     AggregateTelemetryQuery,
-    AggregateTelemetryRow
+    AggregateTelemetryRow,
 } from './telemetry.controller';
-const moment = require('moment-timezone');
 
 @Injectable()
 export class TelemetryService {
@@ -30,25 +29,32 @@ export class TelemetryService {
         const sensors = await entityManager
             .createQueryBuilder()
             .select(['s.id', 's.name', 's.value_type'])
-            .from('sensor','s')
-            .where('s.device_enrollment_group_id = :device_enrollment_group_id', {
-                device_enrollment_group_id: device.deviceEnrollmentGroupId,
-            }).getRawMany();
+            .from('sensor', 's')
+            .where(
+                's.device_enrollment_group_id = :device_enrollment_group_id',
+                {
+                    device_enrollment_group_id: device.deviceEnrollmentGroupId,
+                },
+            )
+            .getRawMany();
 
         const keys = Object.keys(data);
 
         const telemetry = [];
 
-        for (let i=0;i<keys.length;i++) {
-
+        for (let i = 0; i < keys.length; i++) {
             const sensorName = keys[i];
 
-            if (['time','address'].includes(sensorName)) { continue; }
+            if (['time', 'address'].includes(sensorName)) {
+                continue;
+            }
 
-            const sensor = sensors.find((s) => s.name == sensorName);
+            const sensor = sensors.find(s => s.name == sensorName);
 
             if (!sensor) {
-                console.error(`No sensor with device_enrollment_group_id ${device.deviceEnrollmentGroupId} and name ${sensorName} found, skipping...`);
+                console.error(
+                    `No sensor with device_enrollment_group_id ${device.deviceEnrollmentGroupId} and name ${sensorName} found, skipping...`,
+                );
                 continue;
             }
 
@@ -60,10 +66,10 @@ export class TelemetryService {
                 sensor_id: sensor['id'],
                 value_double: null,
                 value_int: null,
-                value_string: null
+                value_string: null,
             };
 
-            switch(valueType) {
+            switch (valueType) {
                 case 'double':
                     row.value_double = data[sensorName];
                     break;
@@ -74,7 +80,7 @@ export class TelemetryService {
                     row.value_string = data[sensorName];
                     break;
                 default:
-                  throw Error(`Invalid value_type ${sensor.value_type}`)
+                    throw Error(`Invalid value_type ${sensor.value_type}`);
             }
 
             telemetry.push(row);
@@ -83,7 +89,14 @@ export class TelemetryService {
         return await entityManager
             .createQueryBuilder()
             .insert()
-            .into('telemetry', ['time', 'device_id', 'sensor_id', 'value_double', 'value_int', 'value_string'])
+            .into('telemetry', [
+                'time',
+                'device_id',
+                'sensor_id',
+                'value_double',
+                'value_int',
+                'value_string',
+            ])
             .values(telemetry)
             .execute();
     }
@@ -101,17 +114,19 @@ export class TelemetryService {
                 's.value_type AS "valueType"',
                 'value_double AS "valueDouble"',
                 'value_int AS "valueInt"',
-                'value_string AS "valueString"'
+                'value_string AS "valueString"',
             ])
-            .from('telemetry','t')
+            .from('telemetry', 't')
             .innerJoin('sensor', 's', 't.sensor_id = s.id')
             .where('t.device_id = :device_id AND s.name = :sensor_name', {
                 device_id: query.deviceId,
-                sensor_name: query.sensorName
+                sensor_name: query.sensorName,
             });
 
         if (query.startDate) {
-            dbQuery.andWhere('time >= :start_date', { start_date: query.startDate });
+            dbQuery.andWhere('time >= :start_date', {
+                start_date: query.startDate,
+            });
         }
 
         if (query.endDate) {
@@ -131,14 +146,16 @@ export class TelemetryService {
         return await dbQuery.getRawMany();
     }
 
-    async queryAggregate(query: AggregateTelemetryQuery): Promise<AggregateTelemetryRow[]> {
+    async queryAggregate(
+        query: AggregateTelemetryQuery,
+    ): Promise<AggregateTelemetryRow[]> {
         const entityManager = getManager();
 
         const aggregateViews = {
-            'HOURLY': 'telemetry_hourly',
-            'DAILY': 'telemetry_daily',
-            'WEEKLY': 'telemetry_weekly'
-        }
+            HOURLY: 'telemetry_hourly',
+            DAILY: 'telemetry_daily',
+            WEEKLY: 'telemetry_weekly',
+        };
 
         const aggregateView = aggregateViews[query.type];
 
@@ -155,17 +172,19 @@ export class TelemetryService {
                 'min_value_double AS "minValueDouble"',
                 'avg_value_int::double precision AS "avgValueInt"',
                 'max_value_int AS "maxValueInt"',
-                'min_value_int AS "minValueInt"'
+                'min_value_int AS "minValueInt"',
             ])
             .from(aggregateView, 't')
             .innerJoin('sensor', 's', 't.sensor_id = s.id')
             .where('t.device_id = :device_id AND s.name = :sensor_name', {
                 device_id: query.deviceId,
-                sensor_name: query.sensorName
+                sensor_name: query.sensorName,
             });
 
         if (query.startDate) {
-            dbQuery.andWhere('time >= :start_date', { start_date: query.startDate });
+            dbQuery.andWhere('time >= :start_date', {
+                start_date: query.startDate,
+            });
         }
 
         if (query.endDate) {

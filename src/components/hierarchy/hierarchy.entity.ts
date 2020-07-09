@@ -27,7 +27,7 @@ export class Hierarchy {
     @ApiProperty()
     uuid: string;
 
-    @ManyToOne(type => Hierarchy)
+    @ManyToOne(() => Hierarchy)
     @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
     @ApiProperty({ type: Hierarchy, required: false })
     parent: Hierarchy;

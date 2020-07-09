@@ -1,15 +1,24 @@
-import { Entity, Column, PrimaryGeneratedColumn, Generated, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger'
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Generated,
+    CreateDateColumn,
+    UpdateDateColumn,
+    ManyToOne,
+    JoinColumn,
+} from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 
 export enum DeviceType {
-    Edge = "edge",
-    Node = "node"
+    Edge = 'edge',
+    Node = 'node',
 }
 
 export enum DeviceStatus {
-    Created = "created",
-    Active = "active",
-    Inactive = "inactive"
+    Created = 'created',
+    Active = 'active',
+    Inactive = 'inactive',
 }
 
 @Entity({ name: 'device' })
@@ -19,64 +28,64 @@ export class Device {
     id: string;
 
     @Column()
-    @Generated("uuid")
+    @Generated('uuid')
     @ApiProperty()
-    uuid: string
+    uuid: string;
 
     @Column({ nullable: true })
     @ApiProperty()
     external_id: string;
 
-    @ManyToOne(type => Device)
-    @JoinColumn({ name: "parent_id", referencedColumnName: "id" })
+    @ManyToOne(() => Device)
+    @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
     @ApiProperty({ type: Device, required: false })
     parent: Device;
 
     @Column()
     @ApiProperty()
-    name: string
+    name: string;
 
     @Column({ nullable: true })
     @ApiProperty({ required: false })
-    description: string
+    description: string;
 
     @Column()
     @ApiProperty()
-    deviceEnrollmentGroupId: string
+    deviceEnrollmentGroupId: string;
 
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: DeviceType,
-        default: DeviceType.Node
+        default: DeviceType.Node,
     })
     @ApiProperty()
-    type: DeviceType
+    type: DeviceType;
 
-    @Column({ type: "point", nullable: true })
+    @Column({ type: 'point', nullable: true })
     @ApiProperty({ required: false })
-    location: string
+    location: string;
 
-    @CreateDateColumn({ type: "timestamp"})
+    @CreateDateColumn({ type: 'timestamp' })
     @ApiProperty()
-    created: Date
+    created: Date;
 
-    @UpdateDateColumn({ type: "timestamp"})
+    @UpdateDateColumn({ type: 'timestamp' })
     @ApiProperty()
-    modified: Date
+    modified: Date;
 
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: DeviceStatus,
-        default: DeviceStatus.Created
+        default: DeviceStatus.Created,
     })
     @ApiProperty()
-    status: DeviceStatus
+    status: DeviceStatus;
 
     @Column()
     @ApiProperty()
-    path: string
+    path: string;
 
     @Column({ nullable: true })
     @ApiProperty({ required: false })
-    hierarchy_id: string
+    hierarchy_id: string;
 }

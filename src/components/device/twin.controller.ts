@@ -77,7 +77,7 @@ export class TwinController {
     @ApiResponse({ status: 200, description: 'Success'})
     @ApiResponse({ status: 404, description: 'Device not found' })
     async getTwin(@Param('id') id: string): Promise<any> {
-        var registry = Registry.fromConnectionString(
+        const registry = Registry.fromConnectionString(
             process.env.IOTHUB_SERVICE_CONNECTION,
         );
         try {
