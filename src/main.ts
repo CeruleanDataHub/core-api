@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+import { version } from '../package.json';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
@@ -23,7 +24,7 @@ async function bootstrap() {
     const options = new DocumentBuilder()
         .setTitle('IoT Platform API')
         .setDescription('IoT platform api')
-        .setVersion('0.0.1')
+        .setVersion(version)
         .build();
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup('/open-api', app, document);
