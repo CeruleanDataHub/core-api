@@ -82,6 +82,6 @@ jobs:
         run: |
           UUID=$(uuidgen)
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          DATA="{ \"name\": \"Docker push ${{ steps.push.outcome }}\", \"image_name\": \"ceruleandatahub/${DOCKER_IMAGE}\", \"version\": ${VERSION} }"
+          DATA="{ "\name\": \"Docker push ${{ steps.push.outcome }}\", \"image_name\": \"${DOCKER_IMAGE}\", \"version\": ${VERSION} }"
           EVENT="{ \"specversion\" : \"1.0\", \"type\" : \"network.cdh.cloud-ci-${{ steps.push.outcome }}\", \"source\" : \"github.com/CeruleanDataHub/core-api\", \"id\": \"${UUID}\", \"time\": \"${TIMESTAMP}\", \"datacontenttype\" : \"application/json\", \"data\": \"${DATA}\" }"
           curl -X POST -H "aeg-sas-key: ${{ secrets.EVENTGRID_KEY }}" -d "$EVENT" ${{ secrets.EVENTGRID_ENDPOINT }}
