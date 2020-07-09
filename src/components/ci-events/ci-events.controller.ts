@@ -18,19 +18,25 @@ export class CiEventsController {
             color = 'yellow';
             value = 'skipped';
         }
+        const title = `${body.data.name} for ${body.data.image_name}`;
+        const commitInfo = `<a href="https://${body.data.source}/commit/${
+            body.data.commit
+        }">${body.data.commit.substring(0, 8)}</a>`;
+        const eventInfo = `<a href="${body.data.event_path}">action</a>`;
+        const dockerHubLink = `Docker Hub: <a href="https://https://hub.docker.com/r/${body.data.image_name}">${body.data.image_name}</a>`;
+        const content = `${body.data.name} for build ${eventInfo} for commit ${commitInfo}<br />${dockerHubLink}`;
         const flowdockData = {
             flow_token: process.env.FLOW_TOKEN,
             event: 'activity',
             author: {
-                name: 'Cerulean Data Hub Builder',
-                avatar:
-                    'https://avatars2.githubusercontent.com/u/66473630?s=60&v=4',
+                name: body.data.actor,
+                avatar: `https://github.com/${body.data.actor}.png`,
             },
             title: body.data.name,
             external_thread_id: body.id,
             thread: {
-                title: body.data.name,
-                body: body.data.name,
+                title,
+                body: content,
                 external_url: `https://${body.source}`,
                 status: {
                     color,
