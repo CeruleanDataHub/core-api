@@ -1,6 +1,8 @@
-# iot-platform-api
+# Cerulean Data Hub - Core API
 
-NodeJS app that provides an API for managing devices, users and telemetry data in the iot-platform.
+![buildx](https://github.com/CeruleanDataHub/core-api/workflows/buildx/badge.svg)
+
+NestJS backend provides an API for managing devices, users and telemetry data in the Cerulean Data Hub.
 
 ## Configuration
 
