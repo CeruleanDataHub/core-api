@@ -19,7 +19,10 @@ FROM --platform=$TARGETPLATFORM node:lts-slim
 
 WORKDIR /usr/src/app
 
+COPY package.json .
 COPY --from=builder /usr/src/app/dist /usr/src/app/dist
+
+RUN npm install --production
 
 USER node
 
