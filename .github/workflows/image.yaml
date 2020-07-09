@@ -14,9 +14,27 @@ jobs:
   buildx:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
       -
-        name: Checkout
-        uses: actions/checkout@v2
+        name: Install
+        id: Install
+        run: |
+          npm install
+      -
+        name: Eslint
+        id: Eslint
+        run: |
+          npm run lint
+      -
+        name: Test
+        id: Test
+        run: |
+          npm test
       -
         name: Prepare
         id: prepare
@@ -75,8 +93,7 @@ jobs:
         if: always() && github.event_name != 'pull_request'
         run: |
           rm -f ${HOME}/.docker/config.json
-
-      - 
+      -
         name: Send Eventgrid message
         if: always()
         run: |
