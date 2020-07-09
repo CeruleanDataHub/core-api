@@ -92,19 +92,22 @@ export class AggregateActiveUserQuery {
     startDate: Date;
     @ApiProperty({ required: false })
     endDate: Date;
-    @ApiProperty({ example: 'DAILY' })
-    type: 'DAILY';
     @ApiProperty({ required: false })
     order: RowOrder;
-    @ApiProperty({ example: 10, required: false })
-    limit: number;
 }
 
 export class AggregateActiveUserRow {
     @ApiProperty()
     time: Date;
     @ApiProperty()
-    valueInt: number;
+    activeUserCount: number;
+}
+
+export class AggregateActiveUsers {
+    @ApiProperty()
+    days: AggregateActiveUserRow[];
+    @ApiProperty()
+    total: number;
 }
 
 @Controller('/identity-event')
@@ -177,18 +180,18 @@ export class IdentityEventController {
         console.log('Inserted identity event to the database');
     }
 
-    @Post('/query-aggregate')
+    @Post('/user-activity')
     @ApiOperation({ summary: 'Query aggregate active users' })
     @HttpCode(HttpStatus.OK)
     @ApiResponse({
         status: HttpStatus.OK,
-        type: AggregateActiveUserRow,
+        type: AggregateActiveUsers,
         isArray: true,
         description: 'Returns aggregate active user data',
     })
-    async queryAggregateTelemetry(
+    async queryUserActivity(
         @Body() query: AggregateActiveUserQuery,
-    ): Promise<AggregateActiveUserRow[]> {
+    ): Promise<AggregateActiveUsers> {
         return await this.identityEventService.queryAggregate(query);
     }
 }

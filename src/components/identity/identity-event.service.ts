@@ -3,49 +3,54 @@ import { getManager } from 'typeorm';
 
 import {
     AggregateActiveUserQuery,
-    AggregateActiveUserRow,
+    AggregateActiveUsers,
 } from './identity-event.controller';
 
 @Injectable()
 export class IdentityEventService {
-    async queryAggregate(
+    getDailyActiveUsers = async (
         query: AggregateActiveUserQuery,
-    ): Promise<AggregateActiveUserRow[]> {
+        total: boolean,
+    ) => {
         const entityManager = getManager();
-
-        const aggregateViews = {
-            //HOURLY: 'active_users_hourly',
-            DAILY: 'active_users_daily',
-            //WEEKLY: 'active_users_weekly',
-        };
-
-        const aggregateView = aggregateViews[query.type];
-
-        const dbQuery = entityManager
+        const dbActiveUsersDaysQuery = entityManager
             .createQueryBuilder()
-            .select(['time', 'active_users AS "activeUsers"'])
-            .from(aggregateView, 't');
+            .select('COUNT(DISTINCT user_id) AS activeUserCount');
+        if (!total) {
+            dbActiveUsersDaysQuery.addSelect(['time']).groupBy('time');
+        }
+        dbActiveUsersDaysQuery.from('active_users_daily', 't');
 
         if (query.startDate) {
-            dbQuery.andWhere('time >= :start_date', {
+            dbActiveUsersDaysQuery.andWhere('time >= :start_date', {
                 start_date: query.startDate,
             });
         }
 
         if (query.endDate) {
-            dbQuery.andWhere('time <= :end_date', { end_date: query.endDate });
+            dbActiveUsersDaysQuery.andWhere('time <= :end_date', {
+                end_date: query.endDate,
+            });
         }
 
         if (query.order) {
             if (query.order.time) {
-                dbQuery.orderBy('time', query.order.time);
+                dbActiveUsersDaysQuery.orderBy('time', query.order.time);
             }
         }
 
-        if (query.limit) {
-            dbQuery.limit(query.limit);
-        }
+        return await dbActiveUsersDaysQuery.execute();
+    };
 
-        return await dbQuery.getRawMany();
+    async queryUserActivity(
+        query: AggregateActiveUserQuery,
+    ): Promise<AggregateActiveUsers> {
+        const dailyActiveUsers = await this.getDailyActiveUsers(query, false);
+        const totalActiveUsers = await this.getDailyActiveUsers(query, true);
+
+        return {
+            days: dailyActiveUsers,
+            total: totalActiveUsers[0].activeusercount,
+        };
     }
 }
