@@ -18,13 +18,12 @@ export class CiEventsController {
             color = 'yellow';
             value = 'skipped';
         }
-        const title = `${body.data.name} for ${body.data.image_name}`;
+        const dockerHubLink = `<a href="https://hub.docker.com/r/${body.data.image_name}">${body.data.version}</a>`;
         const commitInfo = `<a href="https://${body.data.source}/commit/${
             body.data.commit
-        }">${body.data.commit.substring(0, 8)}</a>`;
-        const eventInfo = `<a href="${body.data.event_path}">action</a>`;
-        const dockerHubLink = `Docker Hub: <a href="https://https://hub.docker.com/r/${body.data.image_name}">${body.data.image_name}</a>`;
-        const content = `${body.data.name} for build ${eventInfo} for commit ${commitInfo}<br />${dockerHubLink}`;
+        }">${body.data.commit.substring(0, 7)}</a>`;
+        const threadTitle = `${body.data.name} for ${body.data.image_name}:${body.data.version}`;
+        const eventTitle = `${commitInfo} pushed to ${dockerHubLink}`;
         const flowdockData = {
             flow_token: process.env.FLOW_TOKEN,
             event: 'activity',
@@ -32,11 +31,10 @@ export class CiEventsController {
                 name: body.data.actor,
                 avatar: `https://github.com/${body.data.actor}.png`,
             },
-            title: body.data.name,
+            title: eventTitle,
             external_thread_id: body.id,
             thread: {
-                title,
-                body: content,
+                title: threadTitle,
                 external_url: `https://${body.source}`,
                 status: {
                     color,
