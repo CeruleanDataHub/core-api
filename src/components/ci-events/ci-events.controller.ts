@@ -19,7 +19,7 @@ export class CiEventsController {
             value = 'skipped';
         }
         const dockerHubLink = `<a href="https://hub.docker.com/r/${body.data.image_name}">${body.data.version}</a>`;
-        const commitInfo = `<a href="https://${body.data.source}/commit/${
+        const commitInfo = `<a href="https://${body.source}/commit/${
             body.data.commit
         }">${body.data.commit.substring(0, 7)}</a>`;
         const threadTitle = `${body.data.name} for ${body.data.image_name}:${body.data.version}`;
