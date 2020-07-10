@@ -8,10 +8,43 @@ import {
     Delete,
     Param,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import {
+    ApiOperation,
+    ApiTags,
+    ApiResponse,
+    ApiProperty,
+} from '@nestjs/swagger';
 import { DeviceService } from './device.service';
 import { Device } from './device.entity';
 import { DeviceQueryObjectType } from './device-query.interface';
+
+class RowOrder {
+    @ApiProperty({ example: 'DESC' })
+    time: 'ASC' | 'DESC';
+}
+
+export class AggregateActiveDeviceQuery {
+    @ApiProperty({ required: false })
+    startDate: Date;
+    @ApiProperty({ required: false })
+    endDate: Date;
+    @ApiProperty({ required: false })
+    order: RowOrder;
+}
+
+export class AggregateActiveDeviceRow {
+    @ApiProperty()
+    time: Date;
+    @ApiProperty()
+    activeDeviceCount: number;
+}
+
+export class AggregateActiveDevices {
+    @ApiProperty()
+    days: AggregateActiveDeviceRow[];
+    @ApiProperty()
+    total: number;
+}
 
 @Controller('/device')
 @ApiTags('device')
@@ -84,5 +117,20 @@ export class DeviceController {
             data.callbackModule,
             data.callbackMethod,
         );
+    }
+
+    @Post('/device-activity')
+    @ApiOperation({ summary: 'Query aggregate active device' })
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({
+        status: HttpStatus.OK,
+        type: AggregateActiveDevices,
+        isArray: true,
+        description: 'Returns aggregate active device data',
+    })
+    async queryUserActivity(
+        @Body() query: AggregateActiveDeviceQuery,
+    ): Promise<AggregateActiveDevices> {
+        return await this.deviceService.queryDeviceActivity(query);
     }
 }
