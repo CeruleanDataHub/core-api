@@ -4,7 +4,7 @@
 # - Imports the API to Azure Api Management
 
 trigger:
-- development
+- master
 
 pr: none
 
