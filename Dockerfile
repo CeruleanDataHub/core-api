@@ -2,7 +2,6 @@ FROM --platform=$TARGETPLATFORM node:lts-slim  as builder
 
 ARG VERSION
 ENV VERSION=$VERSION
-
 WORKDIR /usr/src/app
 
 COPY package.json .
@@ -17,6 +16,8 @@ RUN npm run build
 
 FROM --platform=$TARGETPLATFORM node:lts-slim
 
+ARG VERSION
+ENV VERSION=$VERSION
 WORKDIR /usr/src/app
 
 COPY package.json .
