@@ -1,0 +1,101 @@
+# - Builds an image and pushes it to the container registry (tag name comes from the version in package.json)
+# - Creates a new tag and pushes it to remote git repo (tag name comes from the version in package.json)
+# - Waits until the new version of the app is running in Azure App Services
+# - Imports the API to Azure Api Management
+
+trigger:
+- development
+
+pr: none
+
+resources:
+- repo: self
+
+variables:
+- group: core-api
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: getVersionNumber
+    displayName: get version number
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - bash: |
+        set -e
+        VERSION=$(jq '.version' < package.json | sed 's/"//g')
+        echo "##vso[task.setvariable variable=version;isOutput=true]$VERSION"
+      name: getVersionNumber
+  - job: Build
+    displayName: Build
+    dependsOn: getVersionNumber
+    pool:
+      vmImage: 'ubuntu-latest'
+    variables:
+      versionNumber: $[ dependencies.getVersionNumber.outputs['getVersionNumber.version'] ]
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(versionNumber)
+  - job: Tag
+    displayName: Git tag version number
+    dependsOn: getVersionNumber
+    pool:
+      vmImage: 'ubuntu-latest'
+    variables:
+      versionNumber: $[ dependencies.getVersionNumber.outputs['getVersionNumber.version'] ]
+    steps:
+    - checkout: self
+      persistCredentials: true
+    - bash: |
+        set -e
+        git config --global user.name "BuildService"
+        git config --global user.email "BuildService@houston-inc.com"
+        git tag -a $(versionNumber) -m "new version $(versionNumber)" -f
+        git tag
+        git push origin $(versionNumber) -f
+      name: gitTagVersion
+
+- stage: Wait
+  displayName: Wait for app
+  jobs:
+  - job: 'waitForApp'
+    displayName: 'Wait until app is running'
+    pool: Server
+    steps:
+    - task: Delay@1
+      inputs:
+        delayForMinutes: '8'
+
+- stage: Import
+  displayName: Import API
+  jobs:
+  - job: importApi
+    displayName: Import API
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzurePowerShell@4
+      displayName: Import API to API Management
+      inputs:
+        ConnectedServiceNameARM: $(connectedServiceNameARM)
+        ScriptType: 'inlineScript'
+        Inline: |
+          $resourceGroupName = $(azureResourceGroupName)
+          $serviceName = $(apiManagementServiceName)
+          $apiId = $(apiManagementApiId)
+          $specificationFormat = $(openApiSpecificationFormat)
+          $specificationUrl = $(openApiSpecificationUrl)
+          $path = $(apiManagementPath)
+          $apiVersion = $(apiManagementVersion)
+          $azcontext = New-AzApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
+          Import-AzApiManagementApi -Context $azcontext -SpecificationFormat $specificationFormat -SpecificationUrl $specificationUrl -ApiId $apiId -Path $path -ApiVersion $apiVersion
+        TargetAzurePs: latestVersion
