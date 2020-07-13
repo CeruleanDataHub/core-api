@@ -141,7 +141,7 @@ export class DeviceService {
         const dbActiveDeviceDaysQuery = getManager()
             .createQueryBuilder()
             .select(
-                'CAST(COUNT(DISTINCT device_id) AS INTEGER) AS activeDeviceCount',
+                'CAST(COUNT(DISTINCT device_id) AS INTEGER) AS activeCount',
             );
         if (!total) {
             dbActiveDeviceDaysQuery.addSelect(['time']).groupBy('time');
@@ -179,9 +179,10 @@ export class DeviceService {
             query,
             true,
         );
+
         return {
             days: dailyActiveDevices,
-            total: totalActiveDevices[0].activeusercount,
+            total: totalActiveDevices[0].activecount,
         };
     }
 }

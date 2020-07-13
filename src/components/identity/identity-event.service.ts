@@ -15,9 +15,7 @@ export class IdentityEventService {
         const entityManager = getManager();
         const dbActiveUsersDaysQuery = entityManager
             .createQueryBuilder()
-            .select(
-                'CAST(COUNT(DISTINCT user_id) AS INTEGER) AS activeUserCount',
-            );
+            .select('CAST(COUNT(DISTINCT user_id) AS INTEGER) AS activeCount');
         if (!total) {
             dbActiveUsersDaysQuery.addSelect(['time']).groupBy('time');
         }
@@ -52,7 +50,7 @@ export class IdentityEventService {
         const totalActiveUsers = await this.getDailyActiveUsers(query, true);
         return {
             days: dailyActiveUsers,
-            total: totalActiveUsers[0].activeusercount,
+            total: totalActiveUsers[0].activecount,
         };
     }
 }
