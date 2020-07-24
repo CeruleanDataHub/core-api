@@ -110,6 +110,13 @@ export class AggregateActiveUsers {
     total: number;
 }
 
+export class MaxUserLoginCountInADay {
+    @ApiProperty()
+    time: Date;
+    @ApiProperty()
+    count: number;
+}
+
 @Controller('/identity-event')
 @ApiTags('identity')
 export class IdentityEventController {
@@ -193,5 +200,18 @@ export class IdentityEventController {
         @Body() query: AggregateActiveUserQuery,
     ): Promise<AggregateActiveUsers> {
         return await this.identityEventService.queryUserActivity(query);
+    }
+
+    @Get('/day-max-login-count')
+    @ApiOperation({ summary: 'Get maximum user login count' })
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({
+        status: HttpStatus.OK,
+        type: MaxUserLoginCountInADay,
+        isArray: true,
+        description: 'Returns maximum user login count in a single day',
+    })
+    async getMaxUserLoginCountInADay(): Promise<MaxUserLoginCountInADay> {
+        return await this.identityEventService.queryMaxUserLoginCountInADay();
     }
 }

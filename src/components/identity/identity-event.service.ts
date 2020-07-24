@@ -4,6 +4,7 @@ import { getManager } from 'typeorm';
 import {
     AggregateActiveUserQuery,
     AggregateActiveUsers,
+    MaxUserLoginCountInADay,
 } from './identity-event.controller';
 
 @Injectable()
@@ -52,5 +53,24 @@ export class IdentityEventService {
             days: dailyActiveUsers,
             total: totalActiveUsers[0].activecount,
         };
+    }
+
+    async queryMaxUserLoginCountInADay(): Promise<MaxUserLoginCountInADay> {
+        const entityManager = getManager();
+        const dbMaxUserLoginCountInADayQuery = entityManager
+            .createQueryBuilder()
+            .select('time, count')
+            .from('cerulean.user_login_counts_daily', 'l_c1')
+            .innerJoin(
+                query => {
+                    return query
+                        .from('cerulean.user_login_counts_daily', 'l_c2')
+                        .select('MAX(count) AS max_count');
+                },
+                'l_c2',
+                'count= l_c2.max_count',
+            );
+        const maxLoginCountInADay = await dbMaxUserLoginCountInADayQuery.execute();
+        return maxLoginCountInADay[0];
     }
 }
