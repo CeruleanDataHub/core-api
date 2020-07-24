@@ -59,7 +59,7 @@ export class IdentityEventService {
         const entityManager = getManager();
         const dbMaxUserLoginCountInADayQuery = entityManager
             .createQueryBuilder()
-            .select('time, count')
+            .select('time, CAST(count AS INTEGER)')
             .from('cerulean.user_login_counts_daily', 'l_c1')
             .innerJoin(
                 query => {

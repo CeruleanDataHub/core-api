@@ -21,11 +21,10 @@ async function bootstrap() {
             type: 'application/*',
         }),
     );
-
     const options = new DocumentBuilder()
         .setTitle('IoT Platform API')
         .setDescription('IoT platform api')
-        .setVersion(process.env.VERSION)
+        .setVersion('0.0.1')
         .build();
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup('/open-api', app, document);
