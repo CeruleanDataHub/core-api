@@ -208,7 +208,6 @@ export class IdentityEventController {
     @ApiResponse({
         status: HttpStatus.OK,
         type: MaxUserLoginCountInADay,
-        isArray: true,
         description: 'Returns maximum user login count in a single day',
     })
     async getMaxUserLoginCountInADay(): Promise<MaxUserLoginCountInADay> {
