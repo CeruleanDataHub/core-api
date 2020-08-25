@@ -80,6 +80,14 @@ jobs:
         run: |
           docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
       -
+
+        name: kubectl 
+        if: success() && github.event_name != 'pull_request'
+        uses: danielr1996/kubectl-action@1.0.0
+        with:
+          kubeconfig: ${{ secrets.CDH_KUBECONFIG }}
+          args: '"rollout restart deployment/cerulean-core-api -n qa"'
+      -
         name: Send EventGrid Message
         if: always()
         run: |
@@ -98,3 +106,4 @@ jobs:
         if: always() && github.event_name != 'pull_request'
         run: |
           rm -f ${HOME}/.docker/config.json
+          sudo rm -rf /root/.kube
