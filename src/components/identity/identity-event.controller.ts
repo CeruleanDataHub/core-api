@@ -154,6 +154,7 @@ export class IdentityEventController {
         if (auth0Event.type !== 'com.auth0.Log') {
             console.log(`Ignoring event type ${auth0Event.type}`);
             console.log(`Ignored headers: ${util.inspect(headers)}`)
+            console.log(`Ignored body: ${util.inspect(auth0Event)}`)
             return;
         }
 
