@@ -148,22 +148,23 @@ export class IdentityEventController {
         status: HttpStatus.CREATED,
         description: 'Identity event inserted',
     })
-    async insertIdentityEvent(@Headers() headers, @Body() auth0Event: any) {
-        if (auth0Event.type !== 'com.auth0.Log') {
-          console.log("auth0Event.api",auth0Event.api)
-            if(auth0Event.data){
+    async insertIdentityEvent(@Headers() headers, @Body() body: any) {
+        if (body.type !== 'com.auth0.Log') {
+          console.log("headers", headers)
+          console.log("body", body)
+            if(body.data){
               console.log("insert event data")
-              console.log(auth0Event.data);
-              if(auth0Event.data.api) console.log(auth0Event.data.api);
-              if(auth0Event.data.api === 'PutBlob'){
-                this.identityEventService.parseIdentityEventFromBlob(auth0Event);
+              console.log(body.data);
+              if(body.data.api) console.log(body.data.api);
+              if(body.data.api === 'PutBlob'){
+                this.identityEventService.parseIdentityEventFromBlob(body);
               }
             } else {
-              console.log(`Ignoring identity event type ${auth0Event.type}`);
+              console.log(`Ignoring identity event type ${body.type}`);
             }
             return;
         }
-        const auth0EventData = auth0Event.data;
+        const auth0EventData = body.data;
         this.identityEventService.insertNewIdentityEvent(auth0EventData);
     }
 
