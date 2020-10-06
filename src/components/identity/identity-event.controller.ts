@@ -150,6 +150,7 @@ export class IdentityEventController {
     })
     async insertIdentityEvent(@Headers() headers, @Body() auth0Event: any) {
         if (auth0Event.type !== 'com.auth0.Log') {
+          console.log("auth0Event.data",auth0Event.data)
             if(auth0Event.data){
               console.log("insert event data")
               console.log(auth0Event.data);
