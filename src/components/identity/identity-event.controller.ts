@@ -15,7 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { getManager } from 'typeorm';
 import { IdentityEventService } from './identity-event.service';
-import util from "util";
+import util from 'util';
 
 class BaseEvent {
     @ApiProperty()
@@ -150,17 +150,14 @@ export class IdentityEventController {
     })
     async insertIdentityEvent(@Headers() headers, @Body() body: any) {
         if (body.type !== 'com.auth0.Log') {
-          console.log("headers", headers)
-          console.log("body", body)
-            if(body.data){
-              console.log("insert event data")
-              console.log(body.data);
-              if(body.data.api) console.log(body.data.api);
-              if(body.data.api === 'PutBlob'){
-                this.identityEventService.parseIdentityEventFromBlob(body);
-              }
+            if (
+                body[0].data &&
+                body[0].data.api &&
+                body[0].data.api === 'PutBlob'
+            ) {
+                this.identityEventService.parseIdentityEventFromBlob(body[0]);
             } else {
-              console.log(`Ignoring identity event type ${body.type}`);
+                console.log(`Ignoring identity event type ${body.type}`);
             }
             return;
         }
