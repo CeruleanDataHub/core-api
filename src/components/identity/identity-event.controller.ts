@@ -17,8 +17,6 @@ import { getManager } from 'typeorm';
 import { IdentityEventService } from './identity-event.service';
 import util from "util";
 
-const EVENT_SOURCE = 'auth0';
-
 class BaseEvent {
     @ApiProperty()
     connection: string;
@@ -150,45 +148,17 @@ export class IdentityEventController {
         status: HttpStatus.CREATED,
         description: 'Identity event inserted',
     })
-    async insertIdentityEvent(@Headers() headers, @Body() auth0Event: EventGridAuth0Event) {
+    async insertIdentityEvent(@Headers() headers, @Body() auth0Event: any) {
         if (auth0Event.type !== 'com.auth0.Log') {
-            console.log(`Ignoring event type ${auth0Event.type}`);
-            console.log(`Ignored headers: ${util.inspect(headers)}`)
-            console.log(`Ignored body: ${util.inspect(auth0Event)}`)
+            if(auth0Event && auth0Event.data && auth0Event.data.api === 'PutBlob'){
+              this.identityEventService.parseIdentityEventFromBlob(auth0Event);
+            } else {
+              console.log(`Ignoring identity event type ${auth0Event.type}`);
+            }
             return;
         }
-
-        const entityManager = getManager();
-
         const auth0EventData = auth0Event.data;
-
-        const identityEvent = {
-            time: auth0EventData.date,
-            source: EVENT_SOURCE,
-            type: auth0EventData.type,
-            connection: auth0EventData.connection,
-            connection_id: auth0EventData.connection_id,
-            client_id: auth0EventData.client_id,
-            client_name: auth0EventData.client_name,
-            ip: auth0EventData.ip,
-            user_agent: auth0EventData.user_agent,
-            hostname: auth0EventData.hostname,
-            user_id: auth0EventData.user_id,
-            user_name: auth0EventData.user_name,
-            log_id: auth0EventData.log_id,
-            strategy: auth0EventData.strategy,
-            strategy_type: auth0EventData.strategy_type,
-            description: auth0EventData.description,
-        };
-
-        await entityManager
-            .createQueryBuilder()
-            .insert()
-            .into('identity_event')
-            .values(identityEvent)
-            .execute();
-
-        console.log('Inserted identity event to the database');
+        this.identityEventService.insertNewIdentityEvent(auth0EventData);
     }
 
     @Post('/user-activity')
