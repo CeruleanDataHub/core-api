@@ -150,8 +150,13 @@ export class IdentityEventController {
     })
     async insertIdentityEvent(@Headers() headers, @Body() auth0Event: any) {
         if (auth0Event.type !== 'com.auth0.Log') {
-            if(auth0Event && auth0Event.data && auth0Event.data.api === 'PutBlob'){
-              this.identityEventService.parseIdentityEventFromBlob(auth0Event);
+            if(auth0Event.data){
+              console.log("insert event data")
+              console.log(auth0Event.data);
+              if(auth0Event.data.api) console.log(auth0Event.data.api);
+              if(auth0Event.data.api === 'PutBlob'){
+                this.identityEventService.parseIdentityEventFromBlob(auth0Event);
+              }
             } else {
               console.log(`Ignoring identity event type ${auth0Event.type}`);
             }
