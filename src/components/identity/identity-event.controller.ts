@@ -2,6 +2,7 @@ import {
     Controller,
     Post,
     Body,
+    Headers,
     Get,
     HttpStatus,
     HttpCode,
@@ -14,6 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { getManager } from 'typeorm';
 import { IdentityEventService } from './identity-event.service';
+import util from "util";
 
 const EVENT_SOURCE = 'auth0';
 
@@ -148,9 +150,10 @@ export class IdentityEventController {
         status: HttpStatus.CREATED,
         description: 'Identity event inserted',
     })
-    async insertIdentityEvent(@Body() auth0Event: EventGridAuth0Event) {
+    async insertIdentityEvent(@Headers() headers, @Body() auth0Event: EventGridAuth0Event) {
         if (auth0Event.type !== 'com.auth0.Log') {
             console.log(`Ignoring event type ${auth0Event.type}`);
+            console.log(`Ignored headers: ${util.inspect(headers)}`)
             return;
         }
 
