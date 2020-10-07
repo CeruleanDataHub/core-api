@@ -111,7 +111,7 @@ export class IdentityEventService {
     }
 
     async parseIdentityEventFromBlob(blobMeta) {
-        console.log("Trying to get identity event from blob...");
+        console.log("Trying to get identity event from blob...", blobMeta);
         const blobServiceClient = BlobServiceClient.fromConnectionString(
             blobConnectionString,
         );
